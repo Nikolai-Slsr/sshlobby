@@ -207,7 +207,8 @@ t_updates_reboot_needs_hostname() {               # nur bei Bedarf, Hostname mus
 
 t_updates_session_running_vs_done() {             # laufende Sitzung blockiert, fertige wird nur angeboten
   conf "MODE=docker"
-  tmux new-session -d -s "$SSHLOBBY_APT_SESSION" "sleep 60" || skip "tmux-Sitzung nicht startbar"
+  # Startet das einen neuen tmux-Server, nimmt er $SHELL als default-shell; im Test ist das der Host-Shell-Stub
+  SHELL=$(type -P bash) tmux new-session -d -s "$SSHLOBBY_APT_SESSION" "sleep 60" || skip "tmux-Sitzung nicht startbar"
   tt_open "Updates" 'b\nb\nq\n'; has "$OUT" ") Laufendes Update öffnen"
   local a; a=$(tt_nr "$OUT" ") Alle Updates installieren")
   tt_open "Updates" "$a\n\nb\nb\nq\n"; has "$OUT" "Es läuft schon ein Update"

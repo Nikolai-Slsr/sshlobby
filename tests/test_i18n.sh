@@ -54,7 +54,9 @@ t_i18n_language_from_config_and_locale() {
 }
 
 t_i18n_settings_switch() {                         # Einstellungen → Sprache → English (Zeilenmodus: ab nächstem Start)
-  unset SSHLOBBY_LANG; export LC_ALL=de_DE.UTF-8      # Sprache aus Config/Locale statt aus der Test-Umgebung
+  # Sprache aus Config/Locale statt aus der Test-Umgebung. LANG statt LC_ALL: ohne erzeugte de_DE-Locale
+  # schreibt bash bei LC_ALL eine setlocale-Warnung nach stderr, bei LANG nicht
+  unset SSHLOBBY_LANG LC_ALL LC_MESSAGES LC_CTYPE; export LANG=de_DE.UTF-8
   conf "MODE=docker"
   menu 'e\nb\nq\n'; local s; s=$(st_nr "Sprache / Language"); [ -n "$s" ] || die "kein Spracheintrag:\n$OUT"
   menu "e\n$s\nb\nb\nq\n"; rc_is 20; no_err; has "$OUT" "automatisch (Systemsprache"; has "$OUT" "English"
