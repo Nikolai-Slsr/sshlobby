@@ -143,7 +143,7 @@ t_tui_ctrl_c_in_logs() {
   tui_wait "log line from app"
   eq "$(TM display -p -t "$TS" '#{alternate_on}')" 0 "Logs laufen auf dem normalen Bildschirm"
   tui_keys C-c; tui_title "app"; tui_sel_is "Logs folgen"
-  tui_screen | grep -qF "Exit-Code" && die "Fehlermeldung nach Ctrl-C"
+  tui_screen | grep -qE "Exit-Code [0-9]" && die "Fehlermeldung nach Ctrl-C"   # Menütext „Exit-Code, Neustarts“ zählt nicht
   tui_keys q; tui_title "alpha"; tui_keys q; tui_title "sshlobby"; tui_keys q; tui_rc 20
 }
 t_tui_ctrl_c_in_menu() {

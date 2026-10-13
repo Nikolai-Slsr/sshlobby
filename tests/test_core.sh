@@ -46,8 +46,8 @@ t_config_nothing_written_without_tty() {
 
 # ─── Doku / Version ────────────────────────────────────────────────────────
 t_b15_version_docs() {
-  grep -q '^VERSION="3.0.3"$' "$PD" || die "VERSION"
-  grep -q '^## 3.0.3' "$ROOT/CHANGELOG.md" || die "CHANGELOG"
+  grep -q '^VERSION="3.1.0"$' "$PD" || die "VERSION"
+  grep -q '^## 3.1.0' "$ROOT/CHANGELOG.md" || die "CHANGELOG"
   local s; for s in -- --version --setup --mode tests/run.sh docs/ARCHITECTURE.md; do
     grep -qF -- "$s" "$ROOT/README.md" || die "README: $s"
   done

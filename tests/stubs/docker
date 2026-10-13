@@ -11,6 +11,9 @@
 #   sonst eine neutrale Zeile ohne Hermes-Merkmale. "pull" gibt nur STUB-PULL aus.
 #   "system df" (system-df.txt), "system df -v" (system-df-v.*), inspect-Platzhalter
 #   RestartCount/OOMKilled/ExitCode aus inspect-extra.* (name|restarts|oom|exitcode).
+#   inspect ohne --format: JSON wie docker inspect, aus der Zeile erzeugt (State, RestartCount,
+#   RestartPolicy; bei Healthcheck im Status-Text auch State.Health mit zwei Prüfungen und
+#   Config.Healthcheck), STUB_INSPECT_RC=<n> lässt es scheitern.
 # Jeder Aufruf wird in $STUB_LOG protokolliert (ein Argument pro Zeile).
 set -u
 FIX=${PD_FIX:?PD_FIX fehlt}
@@ -36,6 +39,28 @@ rows() { # gibt die sichtbaren Container-Zeilen aus
 }
 find_row() { rows | awk -F'|' -v n="$1" '$1==n{print; exit}'; }
 no_such() { echo "Error response from daemon: No such container: $1" >&2; exit 1; }
+
+json() { # zeile → JSON-Objekt wie in docker inspect (nur die Felder, die sshlobby liest)
+  local name image state status ports dir proj svc policy x restarts=0 oom=false code=0 health=""
+  IFS='|' read -r name image state status ports dir proj svc policy <<< "$1"
+  x=$(awk -F'|' -v n="$name" '$1==n' "$FIX/tools/docker/inspect-extra.${CT:-host}" 2>/dev/null)
+  [ -n "$x" ] && IFS='|' read -r _ restarts oom code <<< "$x"
+  [ "$state" = exited ] && [ -z "$x" ] && code=$(sed -n 's/^Exited (\([0-9]*\)).*/\1/p' <<< "$status")
+  case "$status" in *"(unhealthy)"*) health=unhealthy;; *"health: starting"*) health=starting;; *"(healthy)"*) health=healthy;; esac
+  jq -cn --arg n "/$name" --arg img "$image" --arg st "$state" --arg pol "${policy:-no}" --argjson rs "${restarts:-0}" \
+    --argjson oom "${oom:-false}" --argjson code "${code:-0}" --arg h "$health" '
+    { Name: $n, RestartCount: $rs, HostConfig: { RestartPolicy: { Name: $pol } }, Config: { Image: $img },
+      State: { Status: $st, ExitCode: $code, OOMKilled: $oom, Error: "",
+               StartedAt: "2026-10-09T12:00:00.123456789Z",
+               FinishedAt: (if $st == "running" then "0001-01-01T00:00:00Z" else "2026-09-15T08:00:00.5Z" end) } }
+    | if $h == "" then . else
+        .Config.Healthcheck = { Test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"] }
+        | .State.Health = { Status: $h, FailingStreak: (if $h == "unhealthy" then 3 else 0 end),
+            Log: (if $h == "unhealthy"
+                  then [ { Start: "2026-10-13T09:09:30.1Z", ExitCode: 0, Output: "OK" },
+                         { Start: "2026-10-13T09:10:00.2Z", ExitCode: 1, Output: "curl: (7) Failed to connect\nto localhost port 80" } ]
+                  else [ { Start: "2026-10-13T09:10:00.2Z", ExitCode: 0, Output: "OK" } ] end) } end'
+}
 
 fill() { # format zeile → Platzhalter ersetzen
   local out=$1 name image state status ports dir proj svc policy
@@ -75,7 +100,18 @@ case "$cmd" in
       fill "$fmt" "$row"
     done < <(rows);;
   inspect)
-    [ "${1:-}" = "--format" ] && { fmt=$2; shift 2; }
+    fmt=""; [ "${1:-}" = "--format" ] && { fmt=$2; shift 2; }
+    if [ -z "$fmt" ]; then                      # JSON-Liste wie docker inspect
+      [ -n "${STUB_INSPECT_RC:-}" ] && { echo "Error: inspect kaputt" >&2; exit "$STUB_INSPECT_RC"; }
+      out=() rc=0
+      for name in "$@"; do
+        row=$(find_row "$name")
+        if [ -z "$row" ]; then echo "Error: No such object: $name" >&2; rc=1; continue; fi
+        out+=("$(json "$row")")
+      done
+      [ ${#out[@]} -gt 0 ] && printf '%s\n' "${out[@]}" | jq -s .
+      exit "$rc"
+    fi
     rc=0
     for name in "$@"; do
       row=$(find_row "$name")

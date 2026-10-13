@@ -2,6 +2,23 @@
 
 All notable changes to sshlobby. Versions follow [semantic versioning](https://semver.org/).
 
+## 3.1.0 (2026-10-13)
+
+- The tool "Docker health scan" is now **Docker health**, a menu instead of a text page.
+  - docker mode: two sections, Compose projects (one line per project with running/total, the worst
+    state and the containers that cause it) and standalone containers (one line per container instead
+    of one combined line). Problems come first in each section.
+  - Selecting a project opens the project screen, selecting a container the container screen.
+  - layered mode: one line per Incus container first, problems first. Selecting it shows the same
+    view for the Docker inside; a stopped CT, or one without (reachable) Docker, opens the CT screen.
+  - Restart loops, OOM kills, exit codes other than 0 and frequent restarts are now shown, with the
+    same rules as the server check. Before, the scan only knew unhealthy and stopped.
+  - Key `p` shows only problems, `r` checks again.
+- Container screen: new last entry **State and health check** with state, times, exit code,
+  restarts, restart policy, OOM kill, error text, the health check command and its last results.
+- Compose projects inside Incus containers (layered) can be opened from Docker health: logs,
+  `compose ps`, restart, stop, start and the Compose folder run inside the CT.
+
 ## 3.0.3 (2026-10-13)
 
 - Recent (main menu): opening a Compose project now adds it to "Recent", and selecting the entry opens

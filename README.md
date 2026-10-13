@@ -36,6 +36,8 @@ pending updates.
 | Server tools that fit the current mode | The server check collects problems from all tools |
 | ![Incus containers in layered mode](docs/screenshots/layered.png) | ![Settings](docs/screenshots/settings.png) |
 | Incus containers with Docker inside (mode `layered`) | Settings (key `e`), including reset with backup |
+| ![Docker health](docs/screenshots/health.png) | ![State and health check of a container](docs/screenshots/health-state.png) |
+| Docker health: projects and standalone containers, problems first | State and health check log of an unhealthy container |
 
 The screenshots are rendered from the test fixtures with `tools/dev/screenshots.sh`.
 
@@ -142,7 +144,8 @@ The tools menu shows only what fits the mode and is installed on the server.
 | Network and access | Tailscale, Cloudflare Tunnel, Caddy, WireGuard |
 | Container hygiene | containers without project or restart policy, exited containers, random names |
 | Hermes instances | [Hermes agent](https://hermes-agent.nousresearch.com) instances on the host, in Docker and in Incus containers |
-| Error log, RAM and disk, Docker health scan, Mutagen | quick views |
+| Docker health | Compose projects and standalone containers with problems first: unhealthy, restart loops, OOM kills, exit codes, frequent restarts. Enter opens the project or container; the container screen shows the health check log. Layered: one line per Incus container first |
+| Error log, RAM and disk, Mutagen | quick views |
 | Other server (SSH) | jump to hosts from `SSH_HOSTS` or `~/.ssh/config` |
 | Incus overview, new project, CVE alerts | Incus modes; CVE alerts need `CVE_CT` |
 

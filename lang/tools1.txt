@@ -127,38 +127,7 @@ en = exited with code %s
 de = (SIGKILL, oft OOM oder docker kill)
 en = (SIGKILL, often OOM or docker kill)
 
-# ─── Docker health scan ─────────────────────────────────────────────────────
-[tools.health.title]
-de = Docker-Health-Scan
-en = Docker health scan
-
-[tools.health.desc]
-de = unhealthy, gestoppt, ok
-en = unhealthy, stopped, ok
-
-[tools.health.single]
-de = Einzelcontainer
-en = standalone
-
-[tools.health.partial]
-de = %d/%d laufen, gestoppt: %s
-en = %d/%d running, stopped: %s
-
-[tools.health.running]
-de = (%d laufend)
-en = (%d running)
-
-[tools.health.stopped]
-de = gestoppt
-en = stopped
-
-[tools.health.unreachable]
-de = Docker nicht erreichbar
-en = Docker unreachable
-
-[tools.health.no_docker]
-de = kein Docker
-en = no Docker
+# ─── Docker health: lang/health.txt ─────────────────────────────────────────
 
 # ─── Other server (SSH) ─────────────────────────────────────────────────────
 [tools.ssh.title]

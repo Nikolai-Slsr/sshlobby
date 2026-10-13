@@ -116,44 +116,7 @@ _t_errlog_page() {
 }
 _t_errlog() { ui_run_page "${TX[tools.errlog.page]}" _t_errlog_page; }
 
-# ─── 4 Docker-Health-Scan ──────────────────────────────────────────────────
-_t_health_scan() {
-  local ct out bad p total run nbad dir names v
-  if [ "$MODE" = docker ]; then # pro Compose-Projekt
-    dk_load ""
-    if [ "$DK_RC" -ne 0 ]; then printf '%s%s%s\n' "$C_YLW" "$(dk_msg "" "$DK_RC")" "$C_R"; return 0; fi
-    while IFS='|' read -r p total run nbad dir; do
-      [ -n "$p" ] || continue
-      names=$(dk_rows_of "$p")
-      [ "$p" = "-" ] && p=${TX[tools.health.single]}
-      printf '%-16s ' "$p"
-      if [ "$nbad" -gt 0 ]; then
-        printf '%s✗ unhealthy: %s%s\n' "$C_RED" "$(printf '%s\n' "$names" | awk -F'|' '$3 ~ /unhealthy/ {printf "%s ", $1}')" "$C_R"
-      elif [ "$run" -lt "$total" ]; then
-        tf v tools.health.partial "$run" "$total" "$(printf '%s\n' "$names" | awk -F'|' '$2!="running" {printf "%s ", $1}')"
-        printf '%s! %s%s\n' "$C_YLW" "$v" "$C_R"
-      else
-        tf v tools.health.running "$total"; printf '%s✓ ok%s %s%s%s\n' "$C_GRN" "$C_R" "$C_D" "$v" "$C_R"
-      fi
-    done < <(dk_projects)
-    return 0
-  fi
-  ct_load # layered: pro CT gestoppt / kein Docker / ok / unhealthy-Liste
-  for ct in $(ct_names); do
-    [ "$PD_INT" = 1 ] && break
-    printf '%-16s ' "$ct"
-    out=$(dk_ps "$ct" '{{.Names}}|{{.Status}}')
-    case $? in
-      1) printf '%s– %s%s\n' "$C_GRY" "${TX[tools.health.stopped]}" "$C_R"; continue;;
-      2) printf '%s? %s%s\n' "$C_YLW" "${TX[tools.health.unreachable]}" "$C_R"; continue;;
-      3) printf '%s– %s%s\n' "$C_GRY" "${TX[tools.health.no_docker]}" "$C_R"; continue;;
-    esac
-    bad=$(printf '%s\n' "$out" | awk -F'|' '$2 ~ /unhealthy/ {printf "%s ", $1}')
-    if [ -n "$bad" ]; then printf '%s✗ unhealthy: %s%s\n' "$C_RED" "$bad" "$C_R"
-    else tf v tools.health.running "$(printf '%s' "$out" | grep -c .)"; printf '%s✓ ok%s %s%s%s\n' "$C_GRN" "$C_R" "$C_D" "$v" "$C_R"; fi
-  done
-}
-_t_health() { ui_run_page "${TX[tools.health.title]}" _t_health_scan; }
+# ─── 4 Docker-Health: eigene Datei lib/tools_health.sh ─────────────────────
 
 # ─── 5 Anderer Server (SSH) ────────────────────────────────────────────────
 # Ziele aus SSH_HOSTS, sonst die Host-Einträge aus ~/.ssh/config (ohne Wildcards und Negationen).
@@ -374,7 +337,6 @@ _tl_ctr_issues_ctx() { # kontext
 tool_register incus_overview "${TX[tools.incus_overview.title]}" "incus list"                "incus layered"  _t_incus_avail   _t_incus_overview 10
 tool_register sysinfo        "${TX[tools.sysinfo.title]}"     "free, df, ps"                 "all"            -                _t_sysinfo_run    11
 tool_register errlog         "${TX[tools.errlog.title]}"      "${TX[tools.errlog.desc]}"     "all"            _t_errlog_avail  _t_errlog         12
-tool_register health         "${TX[tools.health.title]}"      "${TX[tools.health.desc]}"     "docker layered" -                _t_health         13
 tool_register ssh            "${TX[tools.ssh.title]}"         "${TX[tools.ssh.desc]}"        "all"            _t_ssh_avail     _t_ssh            14
 tool_register mutagen        "${TX[tools.mutagen.title]}"     "mutagen sync list"            "all"            _t_mutagen_avail _t_mutagen        15
 tool_register cve            "${TX[tools.cve.title]}"         "${TX[tools.cve.desc]}"        "incus layered"  _t_cve_avail     _t_cve            16

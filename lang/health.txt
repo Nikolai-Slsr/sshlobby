@@ -1,0 +1,123 @@
+# sshlobby language file: tool "Docker health" (lib/tools_health.sh).
+# Format and rules: see the header of lang/strings.txt.
+
+[health.title]
+de = Docker-Health
+en = Docker health
+
+[health.desc]
+de = Projekte und Container, Probleme zuerst
+en = projects and containers, problems first
+
+[health.loading]
+de = Prüfe Container
+en = Checking containers
+
+[health.loading_cts]
+de = Prüfe Docker in den CTs
+en = Checking Docker in the CTs
+
+[health.section.cts]
+de = Incus-Container
+en = Incus containers
+
+[health.section.standalone]
+de = Einzelcontainer
+en = Standalone containers
+
+[health.none]
+de = keine Container
+en = no containers
+
+[health.all_ok]
+de = Keine Probleme. Taste p zeigt alles.
+en = No problems. Key p shows everything.
+
+[health.info.status]
+de = Status
+en = Status
+
+[health.summary]
+de = %d/%d laufen · %d Fehler · %d Warnungen · %d gestoppt
+en = %d/%d running · %d errors · %d warnings · %d stopped
+
+[health.summary_cts]
+de = %d CTs · %d mit Fehlern · %d mit Warnungen
+en = %d CTs · %d with errors · %d with warnings
+
+[health.sub.all]
+de = alle
+en = all
+
+[health.sub.only]
+de = nur Probleme
+en = problems only
+
+[health.key.only]
+de = nur Probleme
+en = problems only
+
+[health.key.all]
+de = alle zeigen
+en = show all
+
+[health.key.rescan]
+de = neu prüfen
+en = check again
+
+[health.problems]
+de = Probleme: %s
+en = problems: %s
+
+# Short labels (pills) for the worst state of a container, project or CT
+[health.why.ok]
+de = ok
+en = ok
+
+[health.why.unhealthy]
+de = unhealthy
+en = unhealthy
+
+[health.why.restarting]
+de = Neustart-Schleife
+en = restart loop
+
+[health.why.oom]
+de = OOM-Kill
+en = OOM killed
+
+[health.why.dead]
+de = tot
+en = dead
+
+[health.why.exit]
+de = Exit %s
+en = exit %s
+
+[health.why.restarts]
+de = %s× neu gestartet
+en = restarted %s×
+
+[health.why.starting]
+de = startet
+en = starting
+
+[health.why.stopped]
+de = gestoppt
+en = stopped
+
+[health.why.ctdown]
+de = CT gestoppt
+en = CT stopped
+
+[health.why.unreachable]
+de = Docker nicht erreichbar
+en = Docker unreachable
+
+[health.why.nodocker]
+de = kein Docker
+en = no Docker
+
+[health.why.none]
+de = keine Container
+en = no containers

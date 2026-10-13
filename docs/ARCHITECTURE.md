@@ -263,6 +263,7 @@ Context: `""` = host Docker, `"<ct>"` = `incus exec <ct> -- docker`.
 | `dk_action ctx restart\|stop\|start c` | Through `ui_run_task` (the screen asks for confirmation) |
 | `dk_compose_shell ctx dir group [c]` | Shell in the Compose directory (host: `$SHELL -l`, CT: path as argument) |
 | `dk_compose_logs ctx p`, `dk_compose_ps ctx p`, `dk_compose_action ctx p restart\|stop\|start` | `docker compose -p p ...` without a Compose file. There is deliberately no `up`, `pull` or `down` |
+| `dk_state_show ctx c`, `dk_state_page ctx c` | State and health check of a container from `docker inspect` (JSON, parsed with jq): state, times, exit code, restarts, policy, OOM kill, error, health check command and log. The page is the last entry of the container screen |
 
 ### Incus (`lib/backend_incus.sh`)
 
