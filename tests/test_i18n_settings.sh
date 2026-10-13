@@ -31,14 +31,16 @@ t_i18n_settings_en_save() {
 t_i18n_settings_en_services() {
   export SSHLOBBY_LANG=en PD_TOOLS_ROOT="$PD_FIX/tools/root"
   printf '%s|@tool|services|tool\n' "$(date +%s)" > "$CONF/recents"
-  menu 'q\n'; local n s; n=$(i18s_nr "$OUT" " systemd services"); [ -n "$n" ] || die "Werkzeug fehlt unter Zuletzt:\n$OUT"
-  menu "$n\nb\nq\n"; rc_is 20; no_err
+  menu 'q\n'; local tw n s; tw=$(i18s_nr "$OUT" ") Tools"); [ -n "$tw" ] || die "kein Tools-Eintrag:\n$OUT"
+  menu "$tw\nb\nq\n"; n=$(i18s_nr "$OUT" " systemd services"); eq "$n" 1 "Werkzeug oben unter Recent"
+  has "$OUT" "▌ RECENT"; has "$OUT" "▌ ALL TOOLS"
+  menu "$tw\n$n\nb\nb\nq\n"; rc_is 20; no_err
   has "$OUT" "▌ FAILED"; has "$OUT" "▌ OWN / IMPORTANT"; has "$OUT" "▌ RUNNING"; has "$OUT" "▌ OTHER (INACTIVE, EXITED)"
   has_re "$OUT" "Services +[0-9]+ total · [0-9]+ running · [0-9]+ own"
   local w sec; sec=$(awk '/┌─ systemd services/ { f = 1 } f { print } f && / b\) / { exit }' <<< "$OUT")  # bis zur Tastenzeile
   has "$sec" "reload"; for w in FEHLGESCHLAGEN LAUFEND gesamt "neu laden"; do hasnt "$sec" "$w"; done
   s=$(i18s_nr "$OUT" "● hermes-gateway "); [ -n "$s" ] || die "Dienst fehlt:\n$OUT"
-  menu "$n\n$s\n5\nn\nb\nb\nq\n"; rc_is 20; no_err
+  menu "$tw\n$n\n$s\n5\nn\nb\nb\nb\nq\n"; rc_is 20; no_err
   has_re "$OUT" "Status +● active \(running\) since "; has_re "$OUT" "Main PID +1"; has "$OUT" "service  (own)"
   has "$OUT" ") Follow logs"; has "$OUT" ") Disable autostart"; has "$OUT" "Restart hermes-gateway?"
   for w in Haupt-PID Speicher seit eigene "mit Rückfrage" "neu starten"; do hasnt "$OUT" "$w"; done

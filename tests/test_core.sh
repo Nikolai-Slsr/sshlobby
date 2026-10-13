@@ -18,7 +18,7 @@ t_shellcheck() {
 t_config_known_keys() {
   conf "# Kommentar" "  MODE = incus  " "HOST_LABEL=Testkiste" "FOO=bar" "export X=1" "SSH_HOSTS=" ""
   menu 'q\n'; rc_is 20; no_err
-  has "$OUT" "TESTKISTE Projekt-Dashboard"; has "$OUT" "Modus incus"
+  has "$OUT" "TESTKISTE sshlobby"; has "$OUT" "Modus incus"
   ! grep -q '== docker@' "$STUB_LOG" || die "incus-Modus fragt Docker ab"
 }
 t_config_not_sourced() {
@@ -46,8 +46,8 @@ t_config_nothing_written_without_tty() {
 
 # ─── Doku / Version ────────────────────────────────────────────────────────
 t_b15_version_docs() {
-  grep -q '^VERSION="3.0.2"$' "$PD" || die "VERSION"
-  grep -q '^## 3.0.2' "$ROOT/CHANGELOG.md" || die "CHANGELOG"
+  grep -q '^VERSION="3.0.3"$' "$PD" || die "VERSION"
+  grep -q '^## 3.0.3' "$ROOT/CHANGELOG.md" || die "CHANGELOG"
   local s; for s in -- --version --setup --mode tests/run.sh docs/ARCHITECTURE.md; do
     grep -qF -- "$s" "$ROOT/README.md" || die "README: $s"
   done

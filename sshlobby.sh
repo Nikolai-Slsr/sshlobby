@@ -7,7 +7,7 @@
 set -u
 
 # shellcheck disable=SC2034 # VERSION und PD_EXAMPLES nutzen die Module
-VERSION="3.0.2"
+VERSION="3.0.3"
 PD_SELF=$(readlink -f "${BASH_SOURCE[0]}")
 # shellcheck disable=SC2034 # PD_CALLED: aufgerufener Pfad (meist der Starter-Symlink), braucht sshlobby update
 PD_CALLED=${BASH_SOURCE[0]}

@@ -24,6 +24,8 @@ ${TX[cli.usage.synopsis]}
   --version         ${TX[cli.usage.version]}
 ${TX[cli.usage.exit_codes]}
 ${TX[cli.usage.update_exit]}
+
+$UPD_WEB/$UPD_DEFAULT_REPO
 EOF
 }
 usage_err() { usage >&2; exit "$PD_EXIT_USAGE"; }

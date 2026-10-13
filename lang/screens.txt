@@ -99,9 +99,25 @@ en = Projects / containers
 de = Compose-Projekte
 en = Compose projects
 
-[screens.recent.tool]
-de = Werkzeug · %s
-en = Tool · %s
+[screens.recent.shell]
+de = Shell · %s
+en = Shell · %s
+
+[screens.recent.logs]
+de = Logs · %s
+en = Logs · %s
+
+[screens.recent.compose]
+de = Compose-Ordner · %s
+en = Compose folder · %s
+
+[screens.recent.project]
+de = Compose-Projekt · %s
+en = Compose project · %s
+
+[screens.recent.gone]
+de = Container „%s“ gibt es%s nicht mehr, aus „Zuletzt“ entfernt.
+en = Container "%s" no longer exists%s, removed from "Recent".
 
 [screens.target.ctshell]
 de = %s (CT-Shell)
@@ -348,6 +364,10 @@ en = Server tools
 [screens.tools.mode]
 de = Modus %s
 en = Mode %s
+
+[screens.tools.section_all]
+de = Alle Werkzeuge
+en = All tools
 
 # ─── Docker backend ───
 [docker.err.ct_down]

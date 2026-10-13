@@ -83,8 +83,9 @@ Coding agents find step-by-step instructions in [CLAUDE.md](CLAUDE.md).
 | `r` | reload |
 | `q` | log out (main menu) or back |
 
-The main menu shows recent targets and favorites at the top, then the projects or containers, then
-the server tools. Before a shell opens, sshlobby checks that the container is running. Ctrl-C in
+The main menu shows recent targets (Compose projects, containers, Incus containers, each with the
+action it repeats) and favorites at the top, then the projects or containers, then the server tools.
+Recently used tools appear at the top of the tools menu. Before a shell opens, sshlobby checks that the container is running. Ctrl-C in
 logs, shells and tools only stops that command and returns to the menu.
 
 Without a terminal (pipes, scripts) the same menu prints numbered lines: type the number and Enter,
@@ -163,7 +164,7 @@ file is parsed, never run as shell code. Unknown keys and invalid values are ign
 | `UI` | `auto`, `line` | `line` always uses the numbered line mode |
 | `COLOR` | `auto`, `never` | `never` works like `NO_COLOR` |
 | `SYMBOLS` | `auto`, `ascii` | `ascii` avoids Unicode symbols and frames |
-| `RECENT_MAX` | `5`, `0`…`10` | entries under "Recent", 0 hides them |
+| `RECENT_MAX` | `5`, `0`…`10` | entries under "Recent" (main menu and tools menu), 0 hides them |
 | `SSH_HOSTS` | host names | targets for "Other server (SSH)"; empty: hosts from `~/.ssh/config` |
 | `CVE_CT`, `CVE_DIR` | container, folder | Incus container and alert folder of a CVE monitor (default folder `/opt/cve-monitor/alerts`) |
 | `HERMES_SCAN_CTS` | `yes`, `no` | Hermes tool also looks inside Incus containers |

@@ -2,6 +2,19 @@
 
 All notable changes to sshlobby. Versions follow [semantic versioning](https://semver.org/).
 
+## 3.0.3 (2026-10-13)
+
+- Recent (main menu): opening a Compose project now adds it to "Recent", and selecting the entry opens
+  the project again. Before, only container shells, logs and compose folders were recorded.
+- Recently used tools moved to their own "Recent" list at the top of the tools menu. In the main menu
+  they took the slots of projects and containers (with `RECENT_MAX=3`, three tools hid everything else).
+- Recent entries show what they repeat: "Logs · 5 min ago", "Shell · …", "Compose folder · …".
+- Fix (layered): a recent container that no longer exists in its Incus container showed an error on
+  every try and stayed in the list. Now the entry is removed with a message.
+- Fix: entries recorded in the same second were sorted by name instead of time.
+- The header and the breadcrumb say "sshlobby" instead of "Project dashboard".
+- Settings and `--help` show the project page on GitHub.
+
 ## 3.0.2 (2026-10-12)
 
 - Fix: the release archive of 3.0.1 contained a symbolic link (`tests/stubs/wget`), and the archive check of

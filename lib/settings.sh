@@ -48,6 +48,7 @@ screen_settings() {
     if [ "$CFG_EXISTS" = 1 ]; then ui_info "${TX[settings.info.config]}" "$CONF_FILE_SHOW"
     else tf v settings.info.config_new "$CONF_FILE_SHOW"; ui_info "${TX[settings.info.config]}" "$v" warn; fi
     ui_info "${TX[settings.info.version]}" "sshlobby $VERSION"
+    ui_info "${TX[settings.info.github]}" "$UPD_WEB/$UPD_DEFAULT_REPO"   # Projektseite (Terminals machen Links klickbar)
     ui_item header "" "${TX[settings.group.general]}" "" main
     case "$MODE_SRC" in
       arg) tf v settings.mode.from_arg "$MODE" "${CFG_MODE:-${TX[settings.value.none]}}"; ui_item item mode "${TX[settings.mode]}" "$v";;

@@ -14,10 +14,11 @@ tt_open() {
   menu 'q\n' "$@"; TW=$(tt_nr "$OUT" ") Werkzeuge"); [ -n "$TW" ] || die "kein Werkzeuge-Eintrag:\n$OUT"
   menu "$TW\nb\nq\n" "$@"; TN=$(tt_nr "$OUT" ") $t"); [ -n "$TN" ] || die "Werkzeug »$t« fehlt:\n$OUT"
   menu "$TW\n$TN\n$rest" "$@"
-  # Das Werkzeug steht jetzt unter „Zuletzt“, dadurch verschiebt sich „Werkzeuge“ im Hauptmenü: TW neu
-  # bestimmen, damit Folgeaufrufe mit "$TW\n$TN…" stimmen. OUT/RC/ERR bleiben die des Werkzeug-Laufs.
+  # Das Werkzeug steht jetzt unter „Zuletzt“ im Werkzeug-Menü, dadurch verschieben sich die Nummern dort:
+  # TN neu bestimmen (erster Treffer = Eintrag unter Zuletzt, öffnet dasselbe Werkzeug), damit
+  # Folgeaufrufe mit "$TW\n$TN…" stimmen. OUT/RC/ERR bleiben die des Werkzeug-Laufs.
   local o=$OUT r=$RC e=$ERR
-  menu 'q\n' "$@"; TW=$(tt_nr "$OUT" ") Werkzeuge")
+  menu "$TW\nb\nq\n" "$@"; TN=$(tt_nr "$OUT" ") $t")
   OUT=$o RC=$r ERR=$e
 }
 tt_tools() { export PD_TOOLS_ROOT="$PD_FIX/tools/root"; menu 'q\n'; TW=$(tt_nr "$OUT" ") Werkzeuge"); menu "$TW\nb\nq\n"; } # Werkzeug-Menü → $OUT

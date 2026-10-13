@@ -70,7 +70,7 @@ many_cts() { # n → Fixture mit n laufenden CTs ct01…, ohne Docker
 }
 
 t_tui_arrows_and_vi_keys() {
-  tui_start; tui_wait "Projekt-Dashboard"
+  tui_start; tui_title "sshlobby"
   tui_sel_is "alpha"
   tui_keys Down; tui_sel_is "beta"
   tui_keys j j; tui_sel_is "gamma"
@@ -111,23 +111,23 @@ t_tui_digit_jump() {
   tui_keys 1 2; tui_sel_is "ct12"                          # mehrstellig
   sleep 1; tui_keys 5; sleep 1.2; tui_sel_is "ct05"        # Timeout schließt die Zahl ab
   tui_keys 3 7 Enter; tui_title "ct37"                   # Zahl + Enter öffnet
-  tui_keys Escape; tui_wait "Projekt-Dashboard"; tui_sel_is "ct37"   # Cursor bleibt stehen
+  tui_keys Escape; tui_title "sshlobby"; tui_sel_is "ct37"   # Cursor bleibt stehen
   tui_keys q; tui_rc 20
 }
 t_tui_open_and_back() {
-  tui_start; tui_wait "Projekt-Dashboard"
+  tui_start; tui_title "sshlobby"
   tui_keys Enter; tui_title "alpha"
-  tui_keys Escape; tui_wait "Projekt-Dashboard"
-  tui_keys Right; tui_title "alpha"; tui_keys Left; tui_wait "Projekt-Dashboard"
-  tui_keys l; tui_title "alpha"; tui_keys h; tui_wait "Projekt-Dashboard"
-  tui_keys l; tui_title "alpha"; tui_keys BSpace; tui_wait "Projekt-Dashboard"
-  tui_keys l; tui_title "alpha"; tui_keys b; tui_wait "Projekt-Dashboard"
-  tui_keys l; tui_title "alpha"; tui_keys q; tui_wait "Projekt-Dashboard"   # q im Untermenü = zurück
-  tui_keys Escape b h Left; sleep 0.5; tui_wait "Projekt-Dashboard"       # im Hauptmenü wirkungslos
+  tui_keys Escape; tui_title "sshlobby"
+  tui_keys Right; tui_title "alpha"; tui_keys Left; tui_title "sshlobby"
+  tui_keys l; tui_title "alpha"; tui_keys h; tui_title "sshlobby"
+  tui_keys l; tui_title "alpha"; tui_keys BSpace; tui_title "sshlobby"
+  tui_keys l; tui_title "alpha"; tui_keys b; tui_title "sshlobby"
+  tui_keys l; tui_title "alpha"; tui_keys q; tui_title "sshlobby"   # q im Untermenü = zurück
+  tui_keys Escape b h Left; sleep 0.5; tui_title "sshlobby"       # im Hauptmenü wirkungslos
   tui_keys q; tui_rc 20
 }
 t_tui_exit_terminal_clean() {
-  tui_start; tui_wait "Projekt-Dashboard"
+  tui_start; tui_title "sshlobby"
   eq "$(TM display -p -t "$TS" '#{alternate_on}')" 1 "Alternate Screen während des Menüs"
   tui_keys q; tui_rc 20
   eq "$(TM display -p -t "$TS" '#{alternate_on} #{cursor_flag}')" "0 1" "Alternate Screen aus, Cursor an"
@@ -135,7 +135,7 @@ t_tui_exit_terminal_clean() {
   grep -qE '(^| )icanon( |$)' "$W/tui.stty" || die "icanon aus nach Ende"
 }
 t_tui_ctrl_c_in_logs() {
-  tui_start STUB_LOGS_SLEEP=30; tui_wait "Projekt-Dashboard"
+  tui_start STUB_LOGS_SLEEP=30; tui_title "sshlobby"
   tui_keys Enter; tui_title "alpha"
   tui_keys Down; tui_sel_is " app"; tui_keys Enter; tui_title "app"
   tui_keys Down; tui_sel_is "Logs folgen"; tui_keys Enter
@@ -144,27 +144,27 @@ t_tui_ctrl_c_in_logs() {
   eq "$(TM display -p -t "$TS" '#{alternate_on}')" 0 "Logs laufen auf dem normalen Bildschirm"
   tui_keys C-c; tui_title "app"; tui_sel_is "Logs folgen"
   tui_screen | grep -qF "Exit-Code" && die "Fehlermeldung nach Ctrl-C"
-  tui_keys q; tui_title "alpha"; tui_keys q; tui_wait "Projekt-Dashboard"; tui_keys q; tui_rc 20
+  tui_keys q; tui_title "alpha"; tui_keys q; tui_title "sshlobby"; tui_keys q; tui_rc 20
 }
 t_tui_ctrl_c_in_menu() {
-  tui_start; tui_wait "Projekt-Dashboard"
+  tui_start; tui_title "sshlobby"
   tui_keys C-c; tui_rc 130
   eq "$(TM display -p -t "$TS" '#{alternate_on} #{cursor_flag}')" "0 1" "Terminal nach Ctrl-C"
   grep -qE '(^| )echo( |$)' "$W/tui.stty" || die "echo aus nach Ctrl-C"
 }
 t_tui_hotkeys_and_dialogs() {
-  tui_start; tui_wait "Projekt-Dashboard"
+  tui_start; tui_title "sshlobby"
   tui_keys Enter; tui_title "alpha"; tui_keys Down; tui_keys Enter; tui_title "app"
   tui_keys f; tui_wait "Favorit ★ entfernen"; eq "$(cat "$CONF/favorites")" "alpha|app"
   tui_keys 4; tui_sel_is "Stop"; tui_keys Enter; tui_wait "app stoppen? [j/N]"
   tui_keys n; tui_title "app"; ! logged stop || die "Stop trotz n"
   tui_keys 1; tui_keys Enter; tui_title "app"             # Shell (Stub) und direkt zurück
   for _ in $(seq 30); do logged exec && break; sleep 0.1; done; logged exec || die "keine Shell gestartet"
-  tui_keys q q; tui_wait "Projekt-Dashboard"; tui_wait "★ alpha/app"
+  tui_keys q q; tui_title "sshlobby"; tui_wait "★ alpha/app"
   tui_keys s; tui_rc 10
 }
 t_tui_message_and_pause() {
-  tui_start; tui_wait "Projekt-Dashboard"
+  tui_start; tui_title "sshlobby"
   tui_keys 2 Enter; tui_title "beta"; tui_keys Enter      # CT-Shell auf gestopptem CT
   tui_wait "CT „beta“ läuft nicht (Stopped)"; tui_wait "[Enter] weiter"
   tui_keys Enter; tui_gone "[Enter] weiter"; tui_title "beta"
@@ -181,7 +181,7 @@ t_tui_first_start_setup() {
   tui_keys Up; tui_sel_is "incus"; tui_keys Up; tui_sel_is "docker"; tui_keys Enter
   tui_wait "Anzeigename: docker-host"; tui_keys Enter
   tui_title "Beschreibungen"; tui_sel_is "examples/descriptions.docker-host"; tui_keys Enter
-  tui_title "Projekt-Dashboard"; tui_wait " docker "; tui_wait "COMPOSE-PROJEKTE"
+  tui_title "sshlobby"; tui_wait " docker "; tui_wait "COMPOSE-PROJEKTE"
   grep -qx 'MODE=docker' "$CONF/config" || die "Config nicht geschrieben"
   cmp -s "$CONF/descriptions" "$ROOT/examples/descriptions.docker-host" || die "Beschreibungen fehlen"
   tui_keys q; tui_rc 20
@@ -189,7 +189,7 @@ t_tui_first_start_setup() {
 t_tui_first_start_setup_cancel() {
   noconf
   tui_start; tui_title "Einrichtung"; tui_keys Escape
-  tui_title "Projekt-Dashboard"; tui_wait " layered "; [ ! -e "$CONF/config" ] || die "Abbruch schreibt Config"
+  tui_title "sshlobby"; tui_wait " layered "; [ ! -e "$CONF/config" ] || die "Abbruch schreibt Config"
   tui_keys q; tui_rc 20
 }
 t_tui_resize_redraws() {

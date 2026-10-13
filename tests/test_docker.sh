@@ -33,7 +33,7 @@ t_docker_standalone_group() {
   hasnt "$OUT" "Logs aller Services"                 # keine Projekt-Aktionen
 }
 t_docker_project_actions_confirm() {
-  dmode; menu '4\n8\nn\n9\n\n10\nb\nq\n'; rc_is 20; no_err
+  dmode; norecent; menu '4\n8\nn\n9\n\n10\nb\nq\n'; rc_is 20; no_err
   has "$OUT" "Projekt nextcloud neu starten (alle Services)? [j/N]"
   has "$OUT" "Projekt nextcloud stoppen (alle Services)? [j/N]"
   has "$OUT" "STUB-COMPOSE nextcloud start"
@@ -50,14 +50,14 @@ t_docker_project_logs_ps() {
   logged "--tail" && logged "100" && logged "-f" || die "logs -f --tail 100 fehlt"
 }
 t_docker_project_dir_shell() {
-  dmode; menu '4\n11\nb\nq\n'; rc_is 20; no_err
+  dmode; norecent; menu '4\n11\nb\nq\n'; rc_is 20; no_err
   has "$OUT" "STUB-HOSTSHELL $PD_FIX/fs/host/opt/nextcloud"
   rm -r "$PD_FIX/fs/host/opt/nextcloud"
   menu '4\n11\n\nb\nq\n'; rc_is 20; no_err
   has "$OUT" "Ordner $PD_FIX/fs/host/opt/nextcloud gibt es nicht"; hasnt "$OUT" "STUB-HOSTSHELL"
 }
 t_docker_container_screen() {
-  dmode; menu '4\n2\nb\nb\nq\n'; rc_is 20; no_err
+  dmode; norecent; menu '4\n2\nb\nb\nq\n'; rc_is 20; no_err
   has "$OUT" "┌─ Nextcloud · nextcloud"
   has "$OUT" "Image    registry.example.org/nextcloud/nextcloud:v0.8.8"
   has "$OUT" "Status   ● Up 4 days (healthy)"; has "$OUT" "Health   healthy"
@@ -73,7 +73,7 @@ t_docker_container_actions() {
   has "$OUT" "Nextcloud stoppen? [j/N]"; ! logged stop || die "Stop ohne Bestätigung"
   logged restart && logged start || die "restart/start fehlen"
   has "$OUT" "STUB-DOCKER-EXEC host/Nextcloud"
-  eq "$(cut -d'|' -f2- "$CONF/recents")" "nextcloud|Nextcloud|shell"
+  eq "$(cut -d'|' -f2- "$CONF/recents")" "nextcloud|-|project"$'\n'"nextcloud|Nextcloud|shell"
 }
 t_docker_preflight() {
   dmode; menu '5\n5\n1\n\nb\nb\nq\n'; rc_is 20; no_err

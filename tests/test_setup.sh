@@ -59,7 +59,7 @@ t_setup_examples_offer() {                         # alle Beispiele zur Wahl, pa
   has_re "$OUT" "1\) examples/descriptions.docker-host +6 Einträge  ← passt zu docker-host"; has "$OUT" "3) keine"
   cmp -s "$CONF/descriptions" "$ROOT/examples/descriptions.docker-host" || die "nicht übernommen"
   menu 'q\n'; has_re "$OUT" "nextcloud +5/5  Nextcloud at cloud.example.org"
-  has "$OUT" "DOCKER-HOST Projekt-Dashboard"
+  has "$OUT" "DOCKER-HOST sshlobby"
   printf '1\n' | pd --setup > "$W/out" 2>&1; hasnt "$(<"$W/out")" "BEISPIEL-BESCHREIBUNGEN"   # schon gleich
   echo "x|eigener Text" > "$CONF/descriptions"
   printf '1\n\n3\n' | pd --setup > "$W/out" 2>&1                     # „keine“: eigene Datei bleibt
@@ -76,11 +76,12 @@ t_setup_host_label() {                             # Anzeigename: vorbelegt, nur
   printf '1\nDocker-Host\n\n' | pd --setup > "$W/out" 2>&1; RC=$?; OUT=$(<"$W/out"); rc_is 0
   has "$OUT" "Anzeigename [vps-0001]:"
   grep -qx 'HOST_LABEL=Docker-Host' "$CONF/config" || die "HOST_LABEL fehlt: $(cat "$CONF/config")"
-  menu 'q\n'; has "$OUT" "DOCKER-HOST Projekt-Dashboard"
+  menu 'q\n'; has "$OUT" "DOCKER-HOST sshlobby"
   menu '4\n2\nb\nb\nq\n'; has "$OUT" "Fastpath ssh -t Docker-Host sshlobby --go nextcloud/Nextcloud"
   printf '1\n\n\n' | pd --setup > /dev/null 2>&1                     # leer = behalten
   eq "$(grep -c '^HOST_LABEL=' "$CONF/config")" 1; grep -qx 'HOST_LABEL=Docker-Host' "$CONF/config" || die
   conf "MODE=docker" "HOST_LABEL=Mein Server"                        # kein SSH-Alias → Hostname
+  rm -f "$CONF/recents"                                              # nextcloud unter Zuletzt verschiebt Nummern
   menu '4\n2\nb\nb\nq\n'; has "$OUT" "Fastpath ssh -t vps-0001 sshlobby --go"
   noconf; export STUB_HOSTNAME=docker-host
   printf '1\n\n' | pd --setup > /dev/null 2>&1                       # Default nicht ausgeschrieben

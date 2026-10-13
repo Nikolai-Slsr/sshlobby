@@ -100,27 +100,28 @@ screen_main() {
   done
 }
 
-# Werkzeug im Verlauf: zeit id → Eintrag (nur wenn im aktuellen Modus verfügbar), n = bisherige Einträge
-rec_tool_item() {
-  local d
-  [ -n "${TOOL_TITLE[$2]+x}" ] && tool_available "$2" || return 1
-  [ "$n" -eq 0 ] && ui_item header "" "${TX[screens.section.recent]}" "" recent
-  tf d screens.recent.tool "$(rel_time "$1")"
-  ui_item item "rec:@tool:$2:tool" "$UI_SYM_TOOL ${TOOL_TITLE[$2]}" "$d"
+# Beschreibung eines Verlaufseintrags: zeit aktion → d (Aktion und Alter, CT-Shell nur das Alter)
+rec_desc() {
+  case "$2" in
+    shell|logs|compose|project) tf d "screens.recent.$2" "$(rel_time "$1")";;
+    *) d=$(rel_time "$1");;
+  esac
 }
 
 # incus und layered: Verlauf, Favoriten, CTs. Im incus-Modus nur CT-Einträge (ziel "-").
+# Werkzeuge stehen im Verlauf des Werkzeug-Menüs, Compose-Projekte gibt es nur im docker-Modus.
 main_items_incus() {
-  local ts g t a ct st n
+  local ts g t a ct st n d
   ct_load
   n=0
   while IFS='|' read -r ts g t a; do
     [ "$n" -lt "$RECENT_MAX" ] || break
-    if [ "$g" = "@tool" ]; then rec_tool_item "$ts" "$t" || continue; n=$((n+1)); continue; fi
+    [ "$g" = "@tool" ] || [ "$a" = project ] || [ "$a" = tool ] && continue
     ct_exists "$g" || continue
     [ "$MODE" = incus ] && [ "$t" != "-" ] && continue
     [ $n -eq 0 ] && ui_item header "" "${TX[screens.section.recent]}" "" recent
-    ui_item item "rec:$g:$t:$a" "$(target_label "$g" "$t" " / ")" "$(rel_time "$ts")"
+    rec_desc "$ts" "$a"
+    ui_item item "rec:$g:$t:$a" "$(target_label "$g" "$t" " / ")" "$d"
     n=$((n+1))
   done < <(state_recents)
   # Favoriten: CTs, die es nicht mehr gibt, markiert (Auswahl bietet Entfernen an)
@@ -149,7 +150,7 @@ main_items_incus() {
 
 # docker: Verlauf, Favoriten, Compose-Projekte, Einzelcontainer
 main_items_docker() {
-  local ts g t a n p total run bad dir st name lbl
+  local ts g t a n p total run bad dir st name lbl d
   local -A have_c=() have_p=()
   dk_load ""
   while IFS='|' read -r name _ _ _ _ p _; do
@@ -159,10 +160,17 @@ main_items_docker() {
   n=0
   while IFS='|' read -r ts g t a; do
     [ "$n" -lt "$RECENT_MAX" ] || break
-    if [ "$g" = "@tool" ]; then rec_tool_item "$ts" "$t" || continue; n=$((n+1)); continue; fi
-    if [ "$t" = "-" ] || [ -z "${have_c[$t]+x}" ]; then continue; fi
+    [ "$g" = "@tool" ] || [ "$a" = tool ] && continue
+    if [ "$a" = project ]; then                    # ganzes Compose-Projekt (ziel "-")
+      if [ "$t" != "-" ] || [ "$g" = "-" ] || [ -z "${have_p[$g]+x}" ]; then continue; fi
+      lbl=$g
+    else
+      if [ "$t" = "-" ] || [ -z "${have_c[$t]+x}" ]; then continue; fi
+      lbl=$(target_label "$g" "$t" " / ")
+    fi
     [ $n -eq 0 ] && ui_item header "" "${TX[screens.section.recent]}" "" recent
-    ui_item item "rec:$g:$t:$a" "$(target_label "$g" "$t" " / ")" "$(rel_time "$ts")"
+    rec_desc "$ts" "$a"
+    ui_item item "rec:$g:$t:$a" "$lbl" "$d"
     n=$((n+1))
   done < <(state_recents)
   # Favoriten anderer Modi (CT-Gruppen) ausblenden, fehlende Container markieren
@@ -217,12 +225,23 @@ main_open() { # wert
 open_recent() { # gruppe ziel aktion
   local ctx; ctx=$(mode_ctx "$1")
   case "$3" in
-    tool)    PD_RELOAD=0; tool_run "$2";;
-    ctshell) ct_shell "$1";;
+    ctshell) ct_shell "$1"; return 0;;
+    project) screen_project "$1"; return 0;;
+  esac
+  rec_gone "$ctx" "$1" "$2" && return 0
+  case "$3" in
     logs)    state_add_recent "$1" "$2" logs; dk_logs "$ctx" "$2";;
-    compose) dk_load "$ctx"; dk_compose_shell "$ctx" "$(dk_dir "$2")" "$1" "$2";;
+    compose) dk_compose_shell "$ctx" "$(dk_dir "$2")" "$1" "$2";;
     *)       dk_shell "$ctx" "$1" "$2";;
   esac
+}
+# Container aus dem Verlauf fehlt sicher (Docker erreichbar, Name nicht da): Eintrag entfernen, melden.
+# Lädt DK_ROWS für den Kontext. Rückgabe 0 = fehlt (erledigt), 1 = weiter mit der Aktion
+rec_gone() { # kontext gruppe container
+  dk_load "$1"
+  [ "$DK_RC" -eq 0 ] && [ -z "$(dk_row "$3")" ] || return 1
+  state_del_recent "$2" "$3"
+  ui_msg err "$(t screens.recent.gone "$3" "$(dk_in "$1")")"
 }
 
 # ─── CT-Screen (incus, layered) ────────────────────────────────────────────
@@ -279,6 +298,7 @@ screen_ct() { # ct
 # ─── Compose-Projekt bzw. Einzelcontainer (docker) ─────────────────────────
 screen_project() { # projekt ("-" = Einzelcontainer)
   local p=$1 rows n state status image proj svc d dir total run title
+  [ "$p" = "-" ] || state_add_recent "$p" "-" project   # Projekt öffnen = Verlaufseintrag
   while true; do
     dk_load ""
     rows=$(dk_rows_of "$p")
@@ -386,13 +406,23 @@ screen_container() { # kontext gruppe container
 }
 
 # ─── Werkzeuge ─────────────────────────────────────────────────────────────
+# Oben „Zuletzt“ (zuletzt benutzte Werkzeuge, höchstens RECENT_MAX), darunter alle Werkzeuge.
 screen_tools() {
-  local id
+  local id ts g t a n
   while true; do
+    n=0
+    while IFS='|' read -r ts g t a; do
+      [ "$n" -lt "$RECENT_MAX" ] || break
+      if [ "$g" != "@tool" ] || [ -z "${TOOL_TITLE[$t]+x}" ] || ! tool_available "$t"; then continue; fi
+      [ $n -eq 0 ] && ui_item header "" "${TX[screens.section.recent]}" "" recent
+      ui_item item "rec:$t" "${TOOL_TITLE[$t]}" "$(rel_time "$ts")"
+      n=$((n+1))
+    done < <(state_recents)
+    [ $n -gt 0 ] && ui_item header "" "${TX[screens.tools.section_all]}" "" main
     for id in $(tool_list); do ui_item item "$id" "${TOOL_TITLE[$id]}" "${TOOL_DESC[$id]}"; done
     ui_menu "${TX[screens.tools.title]}" "$(t screens.tools.mode "$MODE")"
     case "$UI_ACT" in
-      select) PD_RELOAD=0; tool_run "$UI_SEL"; [ "$PD_RELOAD" = 1 ] && return 0;;
+      select) PD_RELOAD=0; tool_run "${UI_SEL#rec:}"; [ "$PD_RELOAD" = 1 ] && return 0;;
       *) return 0;;
     esac
   done
