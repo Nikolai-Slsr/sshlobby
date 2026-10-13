@@ -5,7 +5,8 @@
 #          Container-Screen (Logs, Shell, Restart, Zustand und Healthcheck).
 # layered: zuerst eine Zeile pro Incus-CT, Probleme zuerst. Enter öffnet dieselbe Ansicht für das
 #          Docker im CT, bei gestopptem CT, ohne Docker oder ohne erreichbares Docker den CT-Screen.
-# Tasten: p nur Probleme / alle zeigen (gilt für die ganze Sitzung), r neu prüfen, / filtern.
+# Tasten: p nur Probleme / alle zeigen (gilt für die ganze Sitzung), r neu prüfen, f Favorit der markierten
+# Zeile (Projekt nur im docker-Modus, Einzelcontainer, CT), / filtern.
 # Stufen, dieselben Regeln wie tl_ctr_issues im Server-Check: 3 Fehler = unhealthy, Neustart-Schleife,
 # OOM-Kill, tot; 2 Warnung = Exit-Code ≠ 0, mindestens 3 Neustarts durch Docker, Healthcheck startet;
 # 1 gestoppt (exited mit 0, created, paused); 0 ok.
@@ -88,7 +89,7 @@ _hl_count() { # laufend gesamt → FMT
 _hl_keys() { # Hotkeys und Untertitel (HL_SUB) je nach Filter
   if [ "$HL_ONLY" = 1 ]; then UI_KEYS=("p|${TX[health.key.all]}"); HL_SUB=${TX[health.sub.only]}
   else UI_KEYS=("p|${TX[health.key.only]}"); HL_SUB=${TX[health.sub.all]}; fi
-  UI_KEYS+=("r|${TX[health.key.rescan]}")
+  UI_KEYS+=("r|${TX[health.key.rescan]}" "f|$(t screens.key.fav_row "$UI_SYM_FAV")")
 }
 
 # Docker eines Kontexts: Compose-Projekte und Einzelcontainer
@@ -129,7 +130,14 @@ _hl_view() { # kontext ("" = Host-Docker)
     _hl_keys
     ui_menu "${ctx:-${TX[health.title]}}" "$HL_SUB"
     case "$UI_ACT" in
-      key)    [ "$UI_SEL" = p ] && HL_ONLY=$((1 - HL_ONLY));;   # r: Schleife prüft neu
+      key)    case "$UI_SEL" in                              # r: Schleife prüft neu
+                p) HL_ONLY=$((1 - HL_ONLY));;
+                f) fav_need_row || continue
+                   case "$UI_KEYROW" in
+                     p:*) if [ -z "$ctx" ]; then fav_key "${UI_KEYROW#p:}" "-" "${UI_KEYROW#p:}"; else fav_key ""; fi;;
+                     c:*) fav_key "${ctx:--}" "${UI_KEYROW#c:}" "${UI_KEYROW#c:}";;
+                   esac;;
+              esac;;
       select) case "$UI_SEL" in
                 p:*) screen_project "${UI_SEL#p:}" "$ctx";;
                 c:*) screen_container "$ctx" "${ctx:--}" "${UI_SEL#c:}";;
@@ -182,7 +190,10 @@ _hl_cts() {
     _hl_keys
     ui_menu "${TX[health.title]}" "$HL_SUB"
     case "$UI_ACT" in
-      key)    [ "$UI_SEL" = p ] && HL_ONLY=$((1 - HL_ONLY));;
+      key)    case "$UI_SEL" in
+                p) HL_ONLY=$((1 - HL_ONLY));;
+                f) fav_need_row && { sel=${UI_KEYROW#ct:}; fav_key "${sel%%:*}" "-" "${sel%%:*}"; };;
+              esac;;
       select) sel=${UI_SEL#ct:}; ct=${sel%%:*} why=${sel#*:}
               case "$why" in ctdown|unreachable|nodocker) screen_ct "$ct";; *) _hl_view "$ct";; esac;;
       *)      return 0;;

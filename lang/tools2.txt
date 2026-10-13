@@ -95,16 +95,16 @@ de = Ctrl-C zurück
 en = Ctrl-C to go back
 
 [hermes.item.errors]
-de = Fehler-Log
-en = Error log
+de = errors.log anzeigen
+en = Show errors.log
 
 [hermes.item.agentlog]
-de = Agent-Log
-en = Agent log
+de = agent.log anzeigen
+en = Show agent.log
 
 [hermes.item.log_desc]
-de = %s, letzte 150 Zeilen
-en = %s, last 150 lines
+de = letzte 150 Zeilen aus %s
+en = last 150 lines of %s
 
 [hermes.item.config]
 de = config.yaml anzeigen

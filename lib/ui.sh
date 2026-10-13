@@ -28,6 +28,8 @@
 #   UI_STAT="laufend|gesamt|unhealthy|einheit"   Zähler in der Kopfzeile (bleibt stehen)
 #   ui_menu titel [untertitel]
 #     → UI_ACT=select (UI_SEL=wert) | key (UI_SEL=taste) | back | quit | eof, Rückgabe immer 0.
+#     Bei key steht in UI_KEYROW der Wert der markierten Zeile (TUI: Cursor; Zeilenmodus: „taste nr“,
+#     z. B. „f 3“), sonst leer. So wirken Tasten wie f auf die markierte Zeile einer Liste.
 #     Danach sind UI_ITEMS, UI_INFO, UI_KEYS, UI_ROOT, UI_STYLE, UI_PRESEL wieder leer.
 #     TUI: / filtert die Liste live (Enter übernimmt, Esc hebt auf).
 #
@@ -54,7 +56,7 @@
 
 UI_MODE=line UI_ACTIVE=0 UI_STTY="" UI_ROWS=24 UI_COLS=80
 UI_ITEMS=() UI_INFO=() UI_KEYS=() UI_ROOT=0 UI_STYLE="" UI_PRESEL="" UI_STAT=""
-UI_ACT="" UI_SEL="" UI_KEY="" UI_INPUT=""
+UI_ACT="" UI_SEL="" UI_KEY="" UI_INPUT="" UI_KEYROW=""
 declare -gA _UI_LAST=() _UK=()
 declare -ga _UPOS=() _UVIS=() _UCR_D=() _UCR_T=() _UI_CRUMB=() _UI_FRAME=()
 _UI_WINCH=0 _UI_SIG="" _UI_IN_READ=0 _UI_STATUS="" _UI_STATUS_LVL=info _UI_VIEW_H=10
@@ -240,7 +242,7 @@ ui_cell() { printf '\001%s\002%s' "$1" "$2"; } # stil text → Zelle mit Stil
 ui_menu() { # titel [untertitel]
   local title=$1 sub=${2:-}
   _ui_prepare
-  UI_ACT="" UI_SEL=""
+  UI_ACT="" UI_SEL="" UI_KEYROW=""
   if [ "$UI_MODE" = tui ]; then
     _ui_crumb_enter "$title" "${#FUNCNAME[@]}"
     _ui_menu_tui "$title" "$sub"
@@ -249,6 +251,7 @@ ui_menu() { # titel [untertitel]
     _ui_menu_line "$title" "$sub"
   fi
   [ "$UI_ACT" = select ] && _UI_LAST[$title]=$UI_SEL
+  [ "$UI_ACT" = key ] && [ -n "$UI_KEYROW" ] && _UI_LAST[$title]=$UI_KEYROW   # nach f & Co. bleibt der Cursor stehen
   UI_ITEMS=() UI_INFO=() UI_KEYS=() UI_ROOT=0 UI_STYLE="" UI_PRESEL=""
   return 0
 }
@@ -313,7 +316,12 @@ _ui_menu_line() { # titel untertitel
     if [[ $in =~ ^[0-9]{1,4}$ ]] && (( 10#$in >= 1 && 10#$in <= _UCNT )); then
       n=$((10#$in)); UI_ACT=select UI_SEL=${_UV[_UIDX[n]]}; return
     fi
-    if [ -n "$in" ] && [ -n "${_UK[$in]+x}" ]; then UI_ACT=key UI_SEL=$in; return; fi
+    if [ -n "$in" ] && [ -n "${_UK[$in]+x}" ]; then UI_ACT=key UI_SEL=$in UI_KEYROW=""; return; fi
+    # „taste nr“ (auch ohne Leerzeichen): Taste für den Eintrag mit dieser Nummer
+    if [[ $in =~ ^([^0-9[:space:]]+)\ ?([0-9]{1,4})$ ]] && [ -n "${_UK[${BASH_REMATCH[1]}]+x}" ]; then
+      n=$((10#${BASH_REMATCH[2]}))
+      if (( n >= 1 && n <= _UCNT )); then UI_ACT=key UI_SEL=${BASH_REMATCH[1]} UI_KEYROW=${_UV[_UIDX[n]]}; return; fi
+    fi
   done
 }
 
@@ -374,7 +382,11 @@ _ui_menu_tui() { # titel untertitel
       left|h|backspace|b)
         [ "$UI_ROOT" = 1 ] || { UI_ACT=back; return; };;
       q) if [ "$UI_ROOT" = 1 ]; then UI_ACT=quit; else UI_ACT=back; fi; return;;
-      *) if [ -n "$UI_KEY" ] && [ -n "${_UK[$UI_KEY]+x}" ]; then UI_ACT=key UI_SEL=$UI_KEY; return; fi
+      *) if [ -n "$UI_KEY" ] && [ -n "${_UK[$UI_KEY]+x}" ]; then
+           UI_ACT=key UI_SEL=$UI_KEY UI_KEYROW=""
+           [ "$_UCUR" -ge 0 ] && [ -n "${_UPOS[_UCUR]+x}" ] && UI_KEYROW=${_UV[_UCUR]}   # nur sichtbare Zeile (Filter)
+           return
+         fi
          dirty=0;;
     esac
   done
@@ -894,7 +906,7 @@ _ui_tui_footer() { # breite letzte-sichtbare-position → Fußzeile mit Tastenhi
     h=("$_UI_KENT|${TX[ui.hint.apply]}|1" "esc|${TX[ui.hint.discard]}|1" "$_UI_KNAV|${TX[ui.hint.select]}|2" "⌫|${TX[ui.hint.delete]}|3")
     [ "$_UI_UTF8" = 1 ] || h[3]="${TX[ui.key.backspace]}|${TX[ui.hint.delete]}|3"
   else
-    h=("$_UI_KNAV|${TX[ui.hint.select]}|5" "$_UI_KENT|${TX[ui.hint.open]}|3")
+    h=("$_UI_KNAV|${TX[ui.hint.select]}|7" "$_UI_KENT|${TX[ui.hint.open]}|3")   # ↑↓ fällt bei Platzmangel zuerst weg
     if [ -n "$_UFILT" ]; then h+=("esc|${TX[ui.hint.filter_off]}|1"); elif [ "$UI_ROOT" != 1 ]; then h+=("esc|${TX[ui.hint.back]}|4"); fi
     h+=("/|${TX[ui.hint.filter]}|6")
     for k in "${UI_KEYS[@]}"; do h+=("${k%%|*}|${k#*|}|2"); done

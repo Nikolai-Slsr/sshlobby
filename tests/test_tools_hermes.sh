@@ -52,9 +52,8 @@ hm_open() { # instanz-label eingabe-im-instanz-screen [args]
   HI=$(hm_nr "$OUT" "$i"); [ -n "$HI" ] || die "Instanz $i fehlt:\n$OUT"
   menu "$TW\n$TN\n$HI\n$rest" "$@"
 }
-hm_item() { # label → Nummer des Eintrags mit genau dieser Bezeichnung (nicht nur Teilstring, „Fehler-Log“ ≠ „Fehler-Logs“)
-  # nur im letzten Instanz-Screen suchen (Titel „… · Hermes · …“ bis „Auswahl:“), das Werkzeug-Menü davor und
-  # danach hat Einträge mit gleichem Namen (v1.1-Werkzeug „Fehler-Log“)
+hm_item() { # label → Nummer des Eintrags mit genau dieser Bezeichnung (nicht nur Teilstring, „Status“ ≠ „Status prüfen“)
+  # nur im letzten Instanz-Screen suchen (Titel „… · Hermes · …“ bis „Auswahl:“), nicht im Werkzeug-Menü davor und danach
   awk -v l="$1" '/· Hermes · / { f = 1; n = ""; next } f && /Auswahl:/ { f = 0; if (n != "") hit = n; next }
     f && n == "" && match($0, /^ *[0-9]+\) /) { r = substr($0, RLENGTH + 1); m = substr($0, 1, RLENGTH)
       if (r == l || index(r, l "  ") == 1) { gsub(/[ )]/, "", m); n = m } }
@@ -115,7 +114,7 @@ t_hermes_status_in_ct() {                          # Docker im CT: incus exec �
 t_hermes_stopped_container() {                     # gestoppt: keine CLI-Aktionen, aber Start und Dateien
   conf "MODE=docker"; hm_host
   hm_open "old-agent" 'b\nb\nb\nq\n'; rc_is 20; no_err
-  hasnt "$OUT" ") Status"; has "$OUT" ") Gateway starten"; has "$OUT" ") Fehler-Log"
+  hasnt "$OUT" ") Status"; has "$OUT" ") Gateway starten"; has "$OUT" ") errors.log anzeigen"
   has "$OUT" ") Neues Image ziehen"
 }
 
@@ -130,7 +129,8 @@ t_hermes_config_masked() {                         # Schlüssel, Tokens, Passwö
 
 t_hermes_error_log() {
   conf "MODE=docker"; hm_host
-  hm_open "hermes-gateway" 'b\nb\nb\nq\n'; local e; e=$(hm_item "Fehler-Log")
+  hm_open "hermes-gateway" 'b\nb\nb\nq\n'; local e; e=$(hm_item "errors.log anzeigen")
+  [ -z "$(hm_item "Fehler-Log")" ] || die "Instanz-Screen hat noch den Eintrag Fehler-Log (Name gehört dem Werkzeug)"
   hm_open "hermes-gateway" "$e\n\nb\nb\nb\nq\n"; rc_is 20; no_err
   has "$OUT" "Testfehler 42"
 }

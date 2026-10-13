@@ -123,6 +123,34 @@ en = Container "%s" no longer exists%s, removed from "Recent".
 de = %s (CT-Shell)
 en = %s (CT shell)
 
+[screens.key.fav_row]
+de = Favorit %s
+en = favorite %s
+
+[screens.fav.added]
+de = %s zu den Favoriten hinzugefügt
+en = %s added to favorites
+
+[screens.fav.removed]
+de = %s aus den Favoriten entfernt
+en = %s removed from favorites
+
+[screens.fav.not_here]
+de = Für diese Zeile gibt es keinen Favoriten.
+en = This line cannot be a favorite.
+
+[screens.fav.which]
+de = Welche Zeile? Im Zeilenmodus: f und die Nummer, z. B. f 3.
+en = Which line? In line mode: f and the number, e.g. f 3.
+
+[screens.fav.tool]
+de = Werkzeug
+en = Tool
+
+[screens.fav.project]
+de = Compose-Projekt
+en = Compose project
+
 [screens.fav.ct_gone]
 de = CT fehlt
 en = CT missing

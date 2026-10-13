@@ -86,26 +86,51 @@ tl_public_ports() {
     END { print o }'
 }
 
+# Lange Zeilen umbrechen, damit sie in die Seite passen. trenner „, “ (Liste) oder „ “ (Wörter)
+_ports_split() { # trenner text → Zeilen (höchstens UI_COLS-8 Zeichen, mindestens 40)
+  local w=$(( ${UI_COLS:-80} - 8 )); [ "$w" -ge 40 ] || w=40
+  awk -v w="$w" -v sep="$1" '{ n = split($0, a, sep); l = ""
+      for (i = 1; i <= n; i++) { s = a[i] ((sep == ", " && i < n) ? "," : "")
+        if (l != "" && length(l) + 1 + length(s) > w) { print l; l = s } else l = (l == "" ? s : l " " s) }
+      print l }' <<< "$2"
+}
+_ports_wrap() { # stufe text: Liste an „, “ umbrechen, Folgezeilen eingerückt, gleiche Farbe
+  local i; local -a parts
+  mapfile -t parts < <(_ports_split ", " "$2")
+  tl_line "$1" "${parts[0]}"
+  _tl_lvl "$1"
+  for ((i = 1; i < ${#parts[@]}; i++)); do printf '    %s%s%s\n' "$_TL_C" "${parts[i]}" "$C_R"; done
+}
+_ports_hint() { local l; while IFS= read -r l; do tl_dim "$l"; done < <(_ports_split " " "$1"); } # Hinweis, an Wörtern umbrochen
+
+# Seite: Spaltenbreiten je Abschnitt aus den Daten (statt fest 30/16), veröffentlichte Docker-Ports als
+# Prozess „docker“ und Besitzer ohne „Container “, damit der Container-Name auch bei 80 Spalten sichtbar ist.
 _t_ports_page() {
-  local rows cat proto addr port proc own last="" lvl n_pub docker_pub=0 noproc=0
+  local rows cat proto addr port proc own last="" lvl n_pub docker_pub=0 noproc=0 aw=0 pw=0
   local -a title=("" "${TX[ports.cat.public]}" "${TX[ports.cat.tailscale]}" "${TX[ports.cat.private]}" "${TX[ports.cat.local]}")
   rows=$(tl_ports)
   if [ -z "$rows" ]; then tl_line warn "${TX[ports.none]}"; return 0; fi
   n_pub=$(printf '%s\n' "$rows" | awk -F'|' '$1 == 1' | grep -c .)
-  if [ "$n_pub" -gt 0 ]; then tl_line warn "$(t ports.public_n "$n_pub" "$(tl_public_ports)")"
+  if [ "$n_pub" -gt 0 ]; then _ports_wrap warn "$(t ports.public_n "$n_pub" "$(tl_public_ports)")"
   else tl_line ok "${TX[ports.public_none]}"; fi
+  printf '%s\n' "$rows" | awk -F'|' '$1 == 1 && $5 == "docker-proxy" { f = 1 } END { exit !f }' && docker_pub=1
+  rows=$(printf '%s\n' "$rows" | awk -F'|' -v OFS='|' '{ if ($3 ~ /:/) $3 = "[" $3 "]"
+      if ($5 == "docker-proxy" && $7 ~ /^Container /) { $5 = "docker"; $7 = substr($7, 11) }
+      print }')
   while IFS="|" read -r cat proto addr port proc _ own; do
-    if [ "$cat" != "$last" ]; then tl_head "${title[cat]}"; last=$cat; fi
-    [[ $addr == *:* ]] && addr="[$addr]"
+    if [ "$cat" != "$last" ]; then
+      tl_head "${title[cat]}"; last=$cat
+      read -r aw pw < <(printf '%s\n' "$rows" | awk -F'|' -v c="$cat" '$1 == c { a = length($3 ":" $4); p = length($5)
+          if (a > aw) aw = a; if (p > pw) pw = p } END { print aw + 0, pw + 0 }')
+    fi
     [ "$proc" = "?" ] && noproc=1
-    [ "$cat" = 1 ] && [ "$proc" = docker-proxy ] && docker_pub=1
     if [ "$cat" = 1 ]; then lvl=warn; else lvl=""; fi
-    tl_line "$lvl" "$(tl_pad "$proto" 4) $(tl_pad "$addr:$port" 30) $(tl_pad "$proc" 16) $own"
+    tl_line "$lvl" "$(tl_pad "$proto" 4) $(tl_pad "$addr:$port" "$aw")  $(tl_pad "$proc" "$pw")  $own"
   done <<< "$rows"
   echo
-  [ "$docker_pub" = 1 ] && tl_dim "${TX[ports.hint.docker_bypass]}"
-  [ "$noproc" = 1 ] && tl_dim "${TX[ports.hint.noproc]}"
-  [ "$MODE" = layered ] && tl_dim "${TX[ports.hint.layered]}"
+  [ "$docker_pub" = 1 ] && _ports_hint "${TX[ports.hint.docker_bypass]}"
+  [ "$noproc" = 1 ] && _ports_hint "${TX[ports.hint.noproc]}"
+  [ "$MODE" = layered ] && _ports_hint "${TX[ports.hint.layered]}"
   return 0
 }
 _t_ports() { ui_run_page "${TX[ports.title]}" _t_ports_page; }

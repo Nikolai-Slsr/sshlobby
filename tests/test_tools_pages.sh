@@ -40,16 +40,21 @@ t_tools_ports_grouped() {
   before "$OUT" "Öffentlich erreichbar" "Nur über Tailscale"
   before "$OUT" "Nur über Tailscale" "Privat / Docker-Bridge"
   before "$OUT" "Privat / Docker-Bridge" "Nur localhost"
-  has_re "$OUT" "! tcp +0\.0\.0\.0:8642 +docker-proxy +Container hermes → 8643"
+  has_re "$OUT" "! tcp +0\.0\.0\.0:8642 +docker +hermes → 8643"
   has_re "$OUT" "! tcp +0\.0\.0\.0:22 +sshd +ssh\.service"
   has_re "$OUT" "! tcp +\[2001:db8::10\]:443 +caddy +caddy\.service"
-  has_re "$OUT" "tcp +100\.64\.0\.10:25500-25600 +docker-proxy +Container jellyfin_container$"   # Bereich
-  has_re "$OUT" "tcp +127\.0\.0\.1:8096 +docker-proxy +Container gitea → 3000"
+  has_re "$OUT" "tcp +100\.64\.0\.10:25500-25600 +docker +jellyfin_container$"   # Bereich
+  has_re "$OUT" "tcp +127\.0\.0\.1:8096 +docker +gitea → 3000"
   has_re "$OUT" "tcp +172\.17\.0\.1:9100 +node_exporter +Container \(Host-Netz\) 0123456789ab"
   has_re "$OUT" "tcp +127\.0\.0\.1:3000 +node-MainThread +hermes-webui\.service"
   has "$OUT" "11 öffentliche Listener: 8642/tcp hermes, 22/tcp sshd"
   has "$OUT" "umgehen ufw"
   eq "$(grep -c '100.64.0.10:255' <<< "$OUT")" 1 "jellyfin-Ports zusammengefasst"
+  # passt in 80 Spalten: keine Zeile der Seite länger als 78 Zeichen (Liste und Hinweise umbrochen)
+  local long; long=$(awk '/── Ports & Listener ──/ { f = 1; next } f && /\[Enter\]/ { exit } f' <<< "$OUT" |
+    sed 's/\x1b\[[0-9;]*m//g' | while IFS= read -r l; do [ ${#l} -gt 78 ] && printf '%s\n' "$l"; done)   # Zeichen, nicht Bytes
+  [ -z "$long" ] || die "Zeilen über 78 Zeichen:\n$long"
+  has "$OUT" "    443/tcp caddy, 41641/udp tailscaled"           # Folgezeile der Liste
 }
 
 # ─── Container-Ressourcen ─────────────────────────────────────────────────

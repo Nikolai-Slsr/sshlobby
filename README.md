@@ -78,7 +78,7 @@ Coding agents find step-by-step instructions in [CLAUDE.md](CLAUDE.md).
 | `←`, `Esc`, `h`, `b`, Backspace | back |
 | `/` | filter the list as you type |
 | `1`…`9` | jump to an entry |
-| `f` | add or remove a favorite (container, Incus container and service screens) |
+| `f` | add or remove the selected line as a favorite: Compose project, container, Incus container or tool (main menu, project and container screens, Docker health, tools menu, services). Without a terminal: `f 3` for line 3 |
 | `s` | normal shell on the host |
 | `e` | settings |
 | `u` | install a new release (only shown when one is available) |
@@ -86,7 +86,8 @@ Coding agents find step-by-step instructions in [CLAUDE.md](CLAUDE.md).
 | `q` | log out (main menu) or back |
 
 The main menu shows recent targets (Compose projects, containers, Incus containers, each with the
-action it repeats) and favorites at the top, then the projects or containers, then the server tools.
+action it repeats) and favorites (projects, containers, Incus containers, tools) at the top, then the
+projects or containers, then the server tools.
 Recently used tools appear at the top of the tools menu. Before a shell opens, sshlobby checks that the container is running. Ctrl-C in
 logs, shells and tools only stops that command and returns to the menu.
 

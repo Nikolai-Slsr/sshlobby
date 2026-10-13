@@ -28,7 +28,7 @@ Every screen has the same layout across the full terminal width:
     2  ● nextcloud-redis redis:7-alpine             5 d   healthy
 
  · Status line (messages, filter, loading hint)
-  ↑↓ select  ⏎ open  esc back  / filter  f add favourite ☆  q back                                 1–20/45
+  ↑↓ select  ⏎ open  esc back  / filter  f favorite ★  q back                                 1–20/45
 ```
 
 - **Header** (bar): display name (`HOST_LABEL`), mode as a badge, version. On the right the
