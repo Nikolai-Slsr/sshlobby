@@ -106,16 +106,9 @@ t_docker_unreachable() {
   menu 'q\n'; rc_is 20; no_err
   has "$OUT" "(Docker nicht erreichbar)"; has "$OUT" " 1) Werkzeuge"
 }
-t_docker_health_scan() {
-  dmode; sed -i 's/^chat-mongodb|\([^|]*\)|running|Up 4 weeks|/chat-mongodb|\1|running|Up 4 weeks (unhealthy)|/' "$PD_FIX/host-docker"
-  menu '6\n3\n\nb\nq\n'; rc_is 20; no_err
-  has "$OUT" "$(row16 nextcloud '✗ unhealthy: chat-mongodb')"
-  has "$OUT" "$(row16 gitea '✓ ok (1 laufend)')"
-  has "$OUT" "$(row16 Einzelcontainer '! 4/6 laufen, gestoppt: agent-dev old-demo')"
-}
 t_docker_tools_filtered() {
   dmode; menu '6\nb\nq\n'; rc_is 20; no_err
-  has "$OUT" " 1) RAM / Disk / Top-Prozesse"; has "$OUT" " 3) Docker-Health-Scan"
+  has "$OUT" " 1) RAM / Disk / Top-Prozesse"; has "$OUT" " 3) Docker-Health"
   has "$OUT" " 4) Anderer Server (SSH)"; setup_is_last
   hasnt "$OUT" "Incus-Übersicht"; hasnt "$OUT" "CVE-Monitor"; hasnt "$OUT" "Neues Projekt"
   conf "MODE=docker"                                # ohne SSH_HOSTS kein SSH-Werkzeug

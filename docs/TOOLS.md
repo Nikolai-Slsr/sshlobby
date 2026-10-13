@@ -35,8 +35,9 @@ Tool names below are the English UI texts. They come from `lang/*.txt` like ever
 | Timers & cron | all | `systemctl list-timers -o json`, `crontab -l`, `/etc/crontab`, `/etc/cron.d`, `/etc/cron.*` | no |
 | Network & access | all (if any of them is present) | `tailscale status`, cloudflared units and `/etc/cloudflared/*.yml`, `/etc/caddy/Caddyfile`, `wg show all dump` | no |
 | Container hygiene | docker | `docker ps -a`, `docker inspect` | no |
+| Docker health | docker, layered | `docker ps -a`, one `docker inspect` per Docker (restarts, OOM, exit code); container page: `docker inspect <container>` | no (opens the project and container screens, whose actions ask first) |
 
-The other tools from v1.1 (Incus overview, Docker health scan, Mutagen, CVE monitor, Incus
+The other tools from v1.1 (Incus overview, Mutagen, CVE monitor, Incus
 resources, New project) work as before. The last entry, "Settings", opens the settings menu
 (also key `e` in the main menu).
 
@@ -192,6 +193,31 @@ Containers without a Compose project and without a restart policy (they do not c
 a reboot), stopped containers, random names (`docker run` without `--name`), containers whose
 image no longer has a name, and images without a fixed tag (`latest`). Suggestions such as
 `docker rm ...` or `docker update --restart unless-stopped ...` are shown as text only.
+
+## Docker health (docker, layered)
+
+A menu, not a page. **docker**: two sections, Compose projects (one line per project: running/total,
+the worst state as a pill, the containers that cause it) and standalone containers (one line per
+container: image, uptime, state). Within each section problems come first, then by name.
+**Selecting a project** opens the project screen, **selecting a container** the container screen.
+**layered**: first one line per Incus container (problems first). Selecting it opens the same view
+for the Docker inside that container; a stopped container, or one without (reachable) Docker,
+opens the CT screen instead, where it can be started.
+
+| Level | Cases |
+|---|---|
+| error (red) | unhealthy, restart loop (`restarting`), OOM-killed, `dead` |
+| warning (yellow) | exited with an exit code other than 0, 3 or more restarts by Docker, health check starting |
+| stopped (grey) | exited with 0, `created`, `paused` |
+
+These are the same rules the server check and the error log use. Keys: `p` shows only problems
+(and back), `r` checks again, `/` filters. The Incus overview in layered mode reads only `docker ps`
+per container (exit codes from the status text), restarts and OOM kills appear one level down.
+
+The container screen (from here or from the main menu) has the entry **State and health check**:
+state, start and finish time, exit code, restarts, restart policy, OOM kill, the error text, the
+health check command and its last results (newest first, from `docker inspect`), or a note that
+the container has no health check.
 
 ## Error log, RAM / disk, other server
 

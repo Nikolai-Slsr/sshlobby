@@ -52,8 +52,8 @@ de = Werkzeuge
 en = Tools
 
 [screens.main.tools_desc]
-de = Server-Status, Logs, Health-Scan …
-en = Server status, logs, health scan …
+de = Server-Status, Logs, Docker-Health …
+en = Server status, logs, Docker health …
 
 [screens.key.host_shell]
 de = Host-Shell
@@ -311,6 +311,10 @@ en = all services
 de = Host-Shell in %s
 en = Host shell in %s
 
+[screens.project.dir_desc_ct]
+de = Shell im CT %s in %s
+en = Shell in CT %s in %s
+
 [screens.project.running]
 de = %s/%s laufen
 en = %s/%s running
@@ -347,6 +351,14 @@ en = Follow logs
 [screens.container.logs_desc]
 de = tail 100 + follow, Ctrl-C zurück
 en = tail 100 + follow, Ctrl-C to go back
+
+[screens.container.state]
+de = Zustand und Healthcheck
+en = State and health check
+
+[screens.container.state_desc]
+de = Exit-Code, Neustarts, letzte Prüfungen
+en = exit code, restarts, recent checks
 
 [screens.container.confirm_restart]
 de = %s neu starten?
@@ -409,6 +421,79 @@ en = Logs %s
 [docker.logs.project]
 de = Logs Projekt %s
 en = Logs of project %s
+
+# ─── State and health check page (dk_state_show) ───
+[docker.state.title]
+de = Zustand: %s
+en = State: %s
+
+[docker.state.state]
+de = Zustand
+en = State
+
+[docker.state.started]
+de = Gestartet
+en = Started
+
+[docker.state.finished]
+de = Beendet
+en = Finished
+
+[docker.state.exit]
+de = Exit-Code
+en = Exit code
+
+[docker.state.restarts]
+de = Neustarts
+en = Restarts
+
+[docker.state.policy]
+de = Neustart-Regel
+en = Restart policy
+
+[docker.state.oom]
+de = OOM-Kill
+en = OOM killed
+
+[docker.state.error]
+de = Fehler
+en = Error
+
+[docker.state.health]
+de = Health
+en = Health
+
+[docker.state.health_val]
+de = %s · %s Fehlschläge in Folge
+en = %s · %s failures in a row
+
+[docker.state.check]
+de = Healthcheck
+en = Health check
+
+[docker.state.log_head]
+de = Letzte Prüfungen (neueste zuerst)
+en = Recent checks (newest first)
+
+[docker.state.log_exit]
+de = Exit %s
+en = exit %s
+
+[docker.state.no_check]
+de = Kein Healthcheck definiert.
+en = No health check defined.
+
+[docker.state.failed]
+de = docker inspect %s hat nichts geliefert.
+en = docker inspect %s returned nothing.
+
+[docker.state.yes]
+de = ja
+en = yes
+
+[docker.state.no]
+de = nein
+en = no
 
 [docker.verb.start]
 de = starte

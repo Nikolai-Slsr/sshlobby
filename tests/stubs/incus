@@ -10,7 +10,7 @@
 # Jeder Aufruf wird in $STUB_LOG protokolliert (ein Argument pro Zeile).
 # Wie echtes incus liest "exec" stdin leer, wenn es kein Terminal ist (Weiterleitung in den CT).
 # Fehlendes </dev/null in sshlobby fällt so in Tests auf. Mit STUB_TTY_INTERACTIVE=1 lassen nur
-# interaktive Befehle (Shells, docker exec, docker logs) stdin in Ruhe: wie am Terminal, wo die
+# interaktive Befehle (Shells, docker exec, docker logs, docker compose -p … logs) stdin in Ruhe: wie am Terminal, wo die
 # Tastatureingaben für die Shell nicht im Menü-Eingabestrom stehen.
 set -u
 FIX=${PD_FIX:?PD_FIX fehlt}
@@ -59,6 +59,7 @@ do_exec() { # ct -- cmd…
     bash*|"docker exec"*|"docker logs"*) interactive=1;;
     "sh -c "*) [[ "${3:-}" == *docker* ]] || interactive=1;;
   esac
+  case "$*" in "docker compose -p "*" logs"*) interactive=1;; esac   # Logfolge eines Projekts (dk_tty)
   if [ ! -t 0 ] && ! { [ "$interactive" -eq 1 ] && [ -n "${STUB_TTY_INTERACTIVE:-}" ]; }; then
     cat > /dev/null
   fi

@@ -43,5 +43,5 @@ t_incus_ct_favorite() {
 t_incus_tools() {
   imode; menu '7\nb\nq\n'; rc_is 20; no_err       # 6 CTs, Werkzeuge = 7
   has "$OUT" "Incus-Übersicht"; has "$OUT" "CVE-Monitor"; has "$OUT" "Neues Projekt anlegen"
-  hasnt "$OUT" "Docker-Health-Scan"; hasnt "$OUT" "Anderer Server"
+  hasnt "$OUT" ") Docker-Health"; hasnt "$OUT" "Anderer Server"
 }

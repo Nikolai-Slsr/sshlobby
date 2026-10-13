@@ -85,7 +85,7 @@ t_r3_shell_exit_code_no_pause() {
   export STUB_EXEC_RC=2 STUB_SHELL_RC=2            # letzter Befehl in der Shell schlug fehl
   menu '1\n2\n1\n6\nb\n4\nb\nq\n'; rc_is 20; no_err   # Docker-, Compose-, CT-Shell
   has "$OUT" "STUB-DOCKER-EXEC alpha/app"; has "$OUT" "STUB-SH alpha"; has "$OUT" "STUB-BASH alpha"
-  hasnt "$OUT" "[Enter] weiter"; hasnt "$OUT" "Exit-Code"
+  hasnt "$OUT" "[Enter] weiter"; ! grep -qE 'Exit-Code [0-9]' <<< "$OUT" || die "Exit-Code gemeldet"
   cli --go alpha/app; rc_is 2                       # --go reicht den Shell-Exit-Code durch
 }
 t_b9_confirm() {
@@ -198,15 +198,6 @@ t_ct_favorite() {                                  # CT selbst als Favorit (ziel
 }
 
 # ─── Werkzeuge ─────────────────────────────────────────────────────────────
-t_b4_health_scan() {
-  menu '7\n4\n\nb\nq\n'; rc_is 20; no_err
-  has "$OUT" "$(row16 alpha '✗ unhealthy: myapp')"
-  has "$OUT" "$(row16 beta '– gestoppt')"
-  has "$OUT" "$(row16 delta '? Docker nicht erreichbar')"
-  has "$OUT" "$(row16 gamma '– kein Docker')"
-  has "$OUT" "$(row16 ntfy '– kein Docker')"
-  has "$OUT" "$(row16 security '✓ ok (1 laufend)')"
-}
 t_b5_cve_alerts() {
   menu '7\n7\n\nb\nq\n'; rc_is 20; no_err
   has "$OUT" "2 neu"; has "$OUT" "CVE-2026-0001.json"; has "$OUT" "CVE-2026-0002.json"
@@ -222,12 +213,13 @@ t_b5_cve_alerts() {
   menu '6\n7\n\nb\nq\n'; rc_is 20; has "$OUT" 'CT „security“ nicht gefunden'
 }
 t_r1_stdin_not_swallowed() {
-  # Mehrstufige Eingabe über Health-Scan, CVE-Alerts und Incus-Übersicht: frisst ein incus exec
-  # stdin, fehlen die späteren Schritte und das Menü endet per EOF mit 0 statt 20.
-  norecent; menu '7\n4\n\n7\n\n1\n\nb\nq\n'; rc_is 20; no_err
-  has "$OUT" "$(row16 security '✓ ok (1 laufend)')"
+  # Mehrstufige Eingabe über Docker-Health (incus exec in jedem CT, Enter auf alpha, zurück), CVE-Alerts
+  # und Incus-Übersicht: frisst ein incus exec stdin, fehlen die späteren Schritte und das Menü endet
+  # per EOF mit 0 statt 20.
+  norecent; menu '7\n4\n1\nb\nb\n7\n\n1\n\nb\nq\n'; rc_is 20; no_err
+  has_re "$OUT" " 6\) ● security +1/1  ok"; has "$OUT" "┌─ alpha · alle"
   has "$OUT" "2 neu"; has "$OUT" "STUB-LIST list -c nsm4"
-  eq "$(count "$OUT" "[Enter] weiter")" 3
+  eq "$(count "$OUT" "[Enter] weiter")" 2
 }
 t_r1_stdin_container_screen() {                    # Container-Screen + restart/start + Verlauf
   menu '1\n2\n3\nj\n5\nb\nb\nq\n'; rc_is 20; no_err
@@ -269,7 +261,7 @@ t_b7_sigint_logs() {
   wait "$BG"; RC=$?
   rc_is 20                                          # Skript lebt weiter und liest b, b, q
   has "$(<"$W/out")" "Logfolge beendet"
-  hasnt "$(<"$W/out")" "Exit-Code"                  # nach Ctrl-C keine Fehlermeldung/Pause
+  ! grep -qE 'Exit-Code [0-9]' "$W/out" || die "Fehlermeldung nach Ctrl-C"   # keine Meldung/Pause (Text der Meldung: „…: Exit-Code n“)
 }
 t_sigint_menu_exits_clean() {                      # Ctrl-C im Menü selbst beendet sshlobby (130)
   mkfifo "$W/fifo"

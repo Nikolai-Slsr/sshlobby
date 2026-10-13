@@ -5,7 +5,7 @@
 t_b13_help_version() {
   cli --help; rc_is 0; has "$OUT" "Usage: sshlobby"; no_err
   cli -h; rc_is 0; has "$OUT" "--go <ziel>"; has "$OUT" "--setup"; has "$OUT" "--mode <m>"
-  cli --version; rc_is 0; eq "$OUT" "sshlobby 3.0.3"
+  cli --version; rc_is 0; eq "$OUT" "sshlobby 3.1.0"
 }
 t_b13_unknown_args() {
   local a

@@ -295,15 +295,17 @@ screen_ct() { # ct
   done
 }
 
-# ─── Compose-Projekt bzw. Einzelcontainer (docker) ─────────────────────────
-screen_project() { # projekt ("-" = Einzelcontainer)
-  local p=$1 rows n state status image proj svc d dir total run title
-  [ "$p" = "-" ] || state_add_recent "$p" "-" project   # Projekt öffnen = Verlaufseintrag
+# ─── Compose-Projekt bzw. Einzelcontainer (docker; layered nur aus Docker-Health) ─
+# kontext leer = Host-Docker (docker-Modus), sonst der CT. Verlauf und Favoriten-Gruppe wie beim
+# Container-Screen: docker = Projekt bzw. "-", layered = CT. Verlaufseintrag nur im docker-Modus.
+screen_project() { # projekt ("-" = Einzelcontainer) [kontext]
+  local p=$1 ctx=${2:-} rows n state status image proj svc d dir total run title
+  [ "$p" = "-" ] || [ -n "$ctx" ] || state_add_recent "$p" "-" project   # Projekt öffnen = Verlaufseintrag
   while true; do
-    dk_load ""
+    dk_load "$ctx"
     rows=$(dk_rows_of "$p")
     if [ -z "$rows" ]; then
-      if [ "$DK_RC" -ne 0 ]; then ui_msg err "$(dk_msg "" "$DK_RC")."
+      if [ "$DK_RC" -ne 0 ]; then ui_msg err "${ctx:+$ctx: }$(dk_msg "$ctx" "$DK_RC")."
       else ui_msg err "$(t screens.project.no_containers "$p")"; fi
       return 0
     fi
@@ -332,7 +334,8 @@ screen_project() { # projekt ("-" = Einzelcontainer)
       ui_item item prestart "${TX[screens.action.restart]}" "${TX[screens.project.all_services]}" danger
       ui_item item pstop "${TX[screens.action.stop]}" "${TX[screens.project.all_services]}" danger
       ui_item item pstart "${TX[screens.action.start]}" "${TX[screens.project.all_services]}"
-      [ -n "$dir" ] && ui_item item pdir "${TX[screens.action.open_compose_dir]}" "$(t screens.project.dir_desc "$dir")"
+      if [ -n "$dir" ] && [ -n "$ctx" ]; then ui_item item pdir "${TX[screens.action.open_compose_dir]}" "$(t screens.project.dir_desc_ct "$ctx" "$dir")"
+      elif [ -n "$dir" ]; then ui_item item pdir "${TX[screens.action.open_compose_dir]}" "$(t screens.project.dir_desc "$dir")"; fi
     fi
     UI_KEYS=("r|${TX[screens.key.reload]}")
     ui_menu "$title" "$(t screens.project.running "$run" "$total")"
@@ -340,13 +343,13 @@ screen_project() { # projekt ("-" = Einzelcontainer)
       back|quit|eof) return 0;;
       select)
         case "$UI_SEL" in
-          c:*)      screen_container "" "$p" "${UI_SEL#c:}";;
-          plogs)    dk_compose_logs "" "$p";;
-          pps)      dk_compose_ps "" "$p";;
-          prestart) ui_confirm "$(t screens.project.confirm_restart "$p")" && dk_compose_action "" "$p" restart;;
-          pstop)    ui_confirm "$(t screens.project.confirm_stop "$p")" && dk_compose_action "" "$p" stop;;
-          pstart)   dk_compose_action "" "$p" start;;
-          pdir)     dk_compose_shell "" "$dir" "$p" "";;
+          c:*)      screen_container "$ctx" "${ctx:-$p}" "${UI_SEL#c:}";;
+          plogs)    dk_compose_logs "$ctx" "$p";;
+          pps)      dk_compose_ps "$ctx" "$p";;
+          prestart) ui_confirm "$(t screens.project.confirm_restart "$p")" && dk_compose_action "$ctx" "$p" restart;;
+          pstop)    ui_confirm "$(t screens.project.confirm_stop "$p")" && dk_compose_action "$ctx" "$p" stop;;
+          pstart)   dk_compose_action "$ctx" "$p" start;;
+          pdir)     dk_compose_shell "$ctx" "$dir" "$p" "";;
         esac;;
     esac
   done
@@ -386,6 +389,7 @@ screen_container() { # kontext gruppe container
     ui_item item stop "${TX[screens.action.stop]}" "" danger
     ui_item item start "${TX[screens.action.start]}"
     [ -n "$dir" ] && ui_item item compose "${TX[screens.action.open_compose_dir]}" "$dir"
+    ui_item item hstate "${TX[screens.container.state]}" "${TX[screens.container.state_desc]}"
     if is_fav "$grp" "$c"; then tf k screens.key.fav_remove "$UI_SYM_FAV"; else tf k screens.key.fav_add "$UI_SYM_GONE"; fi
     UI_KEYS=("f|$k")
     ui_menu "$c" "${ctx:-${proj:-Docker}}"
@@ -400,6 +404,7 @@ screen_container() { # kontext gruppe container
           stop)    ui_confirm "$(t screens.container.confirm_stop "$c")" && dk_action "$ctx" stop "$c";;
           start)   dk_action "$ctx" start "$c";;
           compose) dk_compose_shell "$ctx" "$dir" "$grp" "$c";;
+          hstate)  dk_state_page "$ctx" "$c";;
         esac;;
     esac
   done

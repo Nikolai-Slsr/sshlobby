@@ -54,7 +54,7 @@ t_ui_header_values() {
   conf "MODE=docker"
   tui_start; tui_title "sshlobby"
   local top; top=$(tui_screen | head -n1)
-  [[ $top == *TESTHOST*docker*"v3.0.3"* ]] || die "Kopf: $top"
+  [[ $top == *TESTHOST*docker*"v3.1.0"* ]] || die "Kopf: $top"
   [[ $top == *"12/14 Container"* ]] || die "Zähler fehlt: $top"
   [[ $top =~ RAM\ [0-9]+%.*Disk\ [0-9]+%.*Load\ [0-9.]+.*up\ [0-9]+ ]] || die "Systemwerte: $top"
   [[ $top =~ up\ [0-9]+\ (T|h|min) ]] || die "Uptime nicht kompakt: $top"

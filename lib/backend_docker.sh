@@ -149,3 +149,57 @@ dk_compose_action() { # kontext projekt restart|stop|start
   case "$3" in start|stop|restart) verb=${TX[docker.verb.$3]};; *) return 1;; esac
   ui_run_task "$(t docker.task.project "$2" "$verb")" dk "$1" compose -p "$2" "$3"
 }
+
+# ─── Zustand und Healthcheck (docker inspect) ──────────────────────────────
+_dk_kv() { # label wert [farbe] → eingerückte Zeile, Label auf DK_KVW Zeichen aufgefüllt (UTF-8-sicher)
+  local l=$1 pad
+  printf -v pad '%*s' $((DK_KVW - ${#l})) ''
+  printf '  %s%s%s%s %s%s%s\n' "$C_GRY" "$l" "$pad" "$C_R" "${3:-}" "$2" "${3:+$C_R}"
+}
+# Zustand, Neustarts, OOM-Kill, Fehler, Healthcheck und dessen letzte Prüfungen (neueste zuerst)
+dk_state_show() { # kontext container
+  local json key a b c lbl v k logs=0 hc=0
+  json=$(dk "$1" inspect "$2" 2>/dev/null)
+  if [ -z "$json" ] || ! jq -e '.[0].State' >/dev/null 2>&1 <<< "$json"; then
+    printf '  %s%s%s\n' "$C_YLW" "$(t docker.state.failed "$2")" "$C_R"; return 0
+  fi
+  DK_KVW=0
+  for k in state started finished exit restarts policy oom error health check; do
+    lbl=${TX[docker.state.$k]}; [ ${#lbl} -gt "$DK_KVW" ] && DK_KVW=${#lbl}
+  done
+  while IFS=$'\x1f' read -r key a b c; do               # Trenner US: leere Felder bleiben erhalten
+    lbl=${TX[docker.state.$key]:-}
+    case "$key" in
+      state)    case "$a" in running) v=$C_GRN;; restarting|dead) v=$C_RED;; *) v=$C_YLW;; esac; _dk_kv "$lbl" "$a" "$v";;
+      exit)     if [ "$a" = 0 ]; then _dk_kv "$lbl" "$a"; else _dk_kv "$lbl" "$a" "$C_YLW"; fi;;
+      restarts) if [ "$a" -ge 3 ] 2>/dev/null; then _dk_kv "$lbl" "$a" "$C_YLW"; else _dk_kv "$lbl" "$a"; fi;;
+      oom)      if [ "$a" = true ]; then _dk_kv "$lbl" "${TX[docker.state.yes]}" "$C_RED"; else _dk_kv "$lbl" "${TX[docker.state.no]}"; fi;;
+      health)   [ -n "$a" ] || continue; hc=1; tf v docker.state.health_val "$a" "$b"
+                case "$a" in healthy) _dk_kv "$lbl" "$v" "$C_GRN";; unhealthy) _dk_kv "$lbl" "$v" "$C_RED";; *) _dk_kv "$lbl" "$v" "$C_YLW";; esac;;
+      check)    [ -n "$a" ] && { hc=1; _dk_kv "$lbl" "$a"; };;
+      log)      [ "$logs" = 1 ] || { printf '\n  %s%s%s\n' "$C_B" "${TX[docker.state.log_head]}" "$C_R"; logs=1; }
+                if [ "$b" = 0 ]; then v=$C_GRN; else v=$C_RED; fi
+                tf k docker.state.log_exit "$b"; printf '  %s  %s%s%s  %s\n' "$a" "$v" "$k" "$C_R" "$c";;
+      *)        [ -n "$a" ] && [ -n "$lbl" ] && _dk_kv "$lbl" "$a";;
+    esac
+  done < <(jq -r 'def ts: if . == null or . == "" or startswith("0001-") then ""
+                          else sub("\\.[0-9]+"; "") | sub("T"; " ") | sub("Z$"; " UTC") end;
+      .[0] as $c | $c.State as $s
+      | (["state", ($s.Status // "?")],
+         ["started", ($s.StartedAt | ts)],
+         ["finished", (if $s.Status == "running" then "" else ($s.FinishedAt | ts) end)],
+         ["exit", ($s.ExitCode // 0 | tostring)],
+         ["restarts", ($c.RestartCount // 0 | tostring)],
+         ["policy", ($c.HostConfig.RestartPolicy.Name // "")],
+         ["oom", ($s.OOMKilled // false | tostring)],
+         ["error", ($s.Error // "" | gsub("[\t\r\n]+"; " "))],
+         (if $s.Health then ["health", ($s.Health.Status // "?"), ($s.Health.FailingStreak // 0 | tostring)] else empty end),
+         ["check", ($c.Config.Healthcheck.Test // [] | if length == 0 or .[0] == "NONE" then ""
+                    elif .[0] == "CMD-SHELL" or .[0] == "CMD" then .[1:] | join(" ") else join(" ") end)]),
+        ($s.Health.Log // [] | reverse | .[]
+          | ["log", (.Start | ts), (.ExitCode // 0 | tostring), (.Output // "" | gsub("[\t\r\n]+"; " ") | .[0:300])])
+      | map(tostring) | join("\u001f")' <<< "$json" 2>/dev/null)
+  [ "$hc" = 1 ] || printf '\n  %s%s%s\n' "$C_GRY" "${TX[docker.state.no_check]}" "$C_R"
+  return 0
+}
+dk_state_page() { ui_run_page "$(t docker.state.title "$2")" dk_state_show "$1" "$2"; } # kontext container

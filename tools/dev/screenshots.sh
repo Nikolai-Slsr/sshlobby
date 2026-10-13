@@ -50,6 +50,8 @@ fresh() { # config lines…
   sed -i "s|@FS@|/srv|g" "$E/fix/host-docker"
   # some life: one unhealthy container
   sed -i 's/^chat-mongodb|mongo:8.0.20|running|Up 4 weeks|/chat-mongodb|mongo:8.0.20|running|Up 4 weeks (unhealthy)|/' "$E/fix/host-docker"
+  # docker ps shows the same exit code as docker inspect (fixtures/tools/docker/inspect-extra.host: 137)
+  sed -i 's/^agent-dev|\([^|]*\)|exited|Exited (0)/agent-dev|\1|exited|Exited (137)/' "$E/fix/host-docker"
   # login hook as written by install.sh, so the settings show the normal state
   sed -n '/^# >>> sshlobby >>>$/,/^# <<< sshlobby <<<$/p' "$ROOT/install.sh" > "$E/home/.bashrc"
   # release check done a moment ago, nothing newer: no background check, settings show "on · checked just now"
@@ -96,10 +98,10 @@ mkdir -p "$OUT"
 case "$LANG_SHOTS" in
   de) W_MAIN="COMPOSE-PROJEKTE" W_TOOLS="Server-Werkzeuge" W_CHECK="Server-Check" W_CONFIRM="[j/N]"
       W_LAYERED="PROJEKTE / CONTAINER" W_SETTINGS="Einstellungen" W_SETUP="Modus" W_CONT="CONTAINER" W_CHECKING="Prüfe den Server"
-      W_UPDATE="Neue Version";;
+      W_UPDATE="Neue Version" W_HEALTH="EINZELCONTAINER" W_STATE="Letzte Prüfungen";;
   *)  W_MAIN="COMPOSE PROJECTS" W_TOOLS="Server tools" W_CHECK="Server check" W_CONFIRM="[y/N]"
       W_LAYERED="PROJECTS / CONTAINERS" W_SETTINGS="Settings" W_SETUP="mode" W_CONT="CONTAINERS" W_CHECKING="Checking the server"
-      W_UPDATE="New version";;
+      W_UPDATE="New version" W_HEALTH="STANDALONE CONTAINERS" W_STATE="Recent checks";;
 esac
 
 fresh "MODE=docker" "HOST_LABEL=web-01"
@@ -115,9 +117,13 @@ shot project.png "root@web-01: ~" 104 24 "$W_CONT" 1 Enter Down
 shot confirm.png "root@web-01: ~" 104 22 "$W_CONFIRM" 1 Enter Down Enter Down Down Down Enter
 shot tools.png "root@web-01: ~" 104 26 "$W_TOOLS" End Enter
 shot server-check.png "root@web-01: ~" 104 17 "› $W_CHECK" End Enter "@$W_TOOLS" 1 Enter "@› $W_CHECK" "!$W_CHECKING"
+# Docker health (tools menu: 2 recent tools, then 3 RAM, 4 error log, 5 Docker health) and the state page of
+# the unhealthy mongodb (project nextcloud, container 5, entry 7 of the container screen)
+shot health.png "root@web-01: ~" 104 24 "$W_HEALTH" End Enter "@$W_TOOLS" 5 Enter
+shot health-state.png "root@web-01: ~" 104 20 "$W_STATE" End Enter "@$W_TOOLS" 5 Enter "@$W_HEALTH" 1 Enter "@admin-panel" 5 Enter "@Fastpath" 7 Enter
 
 # Main menu with the hint for a newer release (cached result of the daily check, no network)
-update_cache v3.1.0
+update_cache v3.2.0
 shot update.png "root@web-01: ~" 104 14 "$W_UPDATE"
 
 fresh "MODE=layered" "HOST_LABEL=lab-01" "CVE_CT=security"
