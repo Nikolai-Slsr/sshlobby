@@ -65,10 +65,13 @@ t_q_action_shell() {
 
 t_recent_max() {                                   # 0 blendet Zuletzt aus, 1 zeigt nur den neuesten Eintrag
   conf "MODE=docker" "RECENT_MAX=1"
+  printf '%s|nextcloud|chat-mongodb|logs\n%s|-|agent-dev|shell\n' "$(date +%s)" "$(( $(date +%s) - 60 ))" > "$CONF/recents"
+  menu 'q\n'; rc_is 20; has "$OUT" "nextcloud / chat-mongodb"; hasnt "$OUT" "agent-dev"
   printf '%s|@tool|updates|tool\n%s|@tool|ports|tool\n' "$(date +%s)" "$(( $(date +%s) - 60 ))" > "$CONF/recents"
-  menu 'q\n'; rc_is 20; eq "$(count "$OUT" "Werkzeug · ")" 1 "Einträge unter Zuletzt"; has "$OUT" " Updates "
+  tt_tools; eq "$(count "$OUT" ") Updates ")" 2 "Updates unter Zuletzt"; eq "$(count "$OUT" ") Ports")" 1 "Ports nur in der Liste"
   conf "MODE=docker" "RECENT_MAX=0"
   menu 'q\n'; rc_is 20; hasnt "$OUT" "ZULETZT"
+  tt_tools; hasnt "$OUT" "ZULETZT"; hasnt "$OUT" "ALLE WERKZEUGE"
   conf "MODE=docker"; st_item "Einträge unter Zuletzt"
   menu "e\n$ST\n1\nb\nq\n"; rc_is 20; cfg_has "RECENT_MAX=0"
 }

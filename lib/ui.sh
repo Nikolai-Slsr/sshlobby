@@ -91,12 +91,12 @@ ui_theme() {
       C_RULE="" C_BAR="" C_DLG="" C_SELBG=$C_REV C_POK="" C_PWRN="" C_PERR="" C_PINF="" C_BADGE=$C_B;;
   esac
   if [ "$_UI_UTF8" = 1 ]; then
-    UI_SYM_TOOL='⚙' UI_SYM_SEL='❯' UI_SYM_DOT='●' UI_SYM_FAV='★' UI_SYM_GONE='☆' UI_SYM_HDR='▌' UI_SYM_DANGER='▲'
+    UI_SYM_SEL='❯' UI_SYM_DOT='●' UI_SYM_FAV='★' UI_SYM_GONE='☆' UI_SYM_HDR='▌' UI_SYM_DANGER='▲'
     UI_SYM_CRUMB='›' UI_SYM_ELL='…' UI_SYM_ARR='→' UI_SYM_OK='✓' UI_SYM_ERR='✗' UI_SYM_MORE='›'
     _UI_H='─' _UI_V='│' _UI_TL='╭' _UI_TR='╮' _UI_BL='╰' _UI_BR='╯' _UI_KNAV='↑↓' _UI_KENT='⏎' _UI_KLR='←→' _UI_CUR='▏'
     [ -n "${NO_COLOR:-}" ] && UI_SYM_SEL='›'
   else
-    UI_SYM_TOOL='+' UI_SYM_SEL='>' UI_SYM_DOT='o' UI_SYM_FAV='*' UI_SYM_GONE='-' UI_SYM_HDR='#' UI_SYM_DANGER='!'
+    UI_SYM_SEL='>' UI_SYM_DOT='o' UI_SYM_FAV='*' UI_SYM_GONE='-' UI_SYM_HDR='#' UI_SYM_DANGER='!'
     UI_SYM_CRUMB='>' UI_SYM_ELL='~' UI_SYM_ARR='->' UI_SYM_OK='+' UI_SYM_ERR='x' UI_SYM_MORE='>'
     _UI_H='-' _UI_V='|' _UI_TL='+' _UI_TR='+' _UI_BL='+' _UI_BR='+' _UI_KNAV=${TX[ui.key.arrows]} _UI_KENT='Enter' _UI_KLR='<>' _UI_CUR='_'
   fi

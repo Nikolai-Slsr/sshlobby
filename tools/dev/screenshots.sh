@@ -68,6 +68,8 @@ shot() {
   while [ $# -gt 0 ] && [ "$1" != -- ]; do keys+=("$1"); shift; done
   [ "${1:-}" = -- ] && { shift; envs=("$@"); }
   N=$((N + 1))
+  # every view starts from the same history (opening a project or tool adds entries and shifts numbers)
+  [ -f "$E/recents.fixed" ] && cp "$E/recents.fixed" "$E/home/.config/sshlobby/recents"
   SHELL=$(type -P bash) T new-session -d -x "$w" -y "$h" -s "s$N" \
     "env -i PATH='$STUBPATH' HOME='$E/home' PD_FIX='$E/fix' PD_TOOLS_ROOT='$E/fix/tools/root' STUB_LOG=/dev/null \
      STUB_TTY_INTERACTIVE=1 STUB_HOSTNAME=web-01 LC_ALL=C.UTF-8 TERM=xterm-256color SSHLOBBY_LANG=$LANG_SHOTS \
@@ -102,13 +104,17 @@ esac
 
 fresh "MODE=docker" "HOST_LABEL=web-01"
 cp "$ROOT/examples/descriptions.docker-host" "$E/home/.config/sshlobby/descriptions"
-printf '%s|nextcloud|Nextcloud|shell\n%s|-|hermes|logs\n' "$(date +%s)" "$(( $(date +%s) - 7200 ))" > "$E/home/.config/sshlobby/recents"
+# history: a Compose project, a container shell and logs in the main menu, two tools in the tools menu
+now=$(date +%s)
+printf '%s\n' "$((now - 7200))|-|hermes|logs" "$((now - 3600))|@tool|updates|tool" "$((now - 900))|@tool|check|tool" \
+  "$((now - 300))|nextcloud|Nextcloud|shell" "$((now - 120))|nextcloud|-|project" > "$E/recents.fixed"
 printf 'nextcloud|Nextcloud\n' > "$E/home/.config/sshlobby/favorites"
-shot main-docker.png "root@web-01: ~" 104 22 "$W_MAIN"
-shot project.png "root@web-01: ~" 104 24 "$W_CONT" 7 Enter Down
-shot confirm.png "root@web-01: ~" 104 22 "$W_CONFIRM" 7 Enter Down Enter Down Down Down Enter
-shot tools.png "root@web-01: ~" 104 23 "$W_TOOLS" 9 Enter
-shot server-check.png "root@web-01: ~" 104 17 "› $W_CHECK" 9 Enter "@$W_TOOLS" 5 Enter "@› $W_CHECK" "!$W_CHECKING"
+# main menu: 1 nextcloud (project), 2 nextcloud / Nextcloud, 3 hermes, 4 ★ favorite, projects, tools last (End)
+shot main-docker.png "root@web-01: ~" 104 23 "$W_MAIN"
+shot project.png "root@web-01: ~" 104 24 "$W_CONT" 1 Enter Down
+shot confirm.png "root@web-01: ~" 104 22 "$W_CONFIRM" 1 Enter Down Enter Down Down Down Enter
+shot tools.png "root@web-01: ~" 104 26 "$W_TOOLS" End Enter
+shot server-check.png "root@web-01: ~" 104 17 "› $W_CHECK" End Enter "@$W_TOOLS" 1 Enter "@› $W_CHECK" "!$W_CHECKING"
 
 # Main menu with the hint for a newer release (cached result of the daily check, no network)
 update_cache v3.1.0
@@ -117,7 +123,7 @@ shot update.png "root@web-01: ~" 104 14 "$W_UPDATE"
 fresh "MODE=layered" "HOST_LABEL=lab-01" "CVE_CT=security"
 cp "$ROOT/examples/descriptions.incus-host" "$E/home/.config/sshlobby/descriptions"
 shot layered.png "root@lab-01: ~" 104 15 "$W_LAYERED"
-shot settings.png "root@lab-01: ~" 104 38 "$W_SETTINGS" e
+shot settings.png "root@lab-01: ~" 104 39 "$W_SETTINGS" e
 
 fresh
 shot setup.png "root@web-01: ~" 104 14 "$W_SETUP"

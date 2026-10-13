@@ -13,6 +13,8 @@ setup() { # frische Fixture + HOME pro Test, Standard-Config layered wie incus-h
   conf "MODE=layered" "SSH_HOSTS=Docker-Host" "CVE_CT=security"
 }
 conf() { printf '%s\n' "$@" > "$CONF/config"; } # Config-Zeilen schreiben
+# Verlauf ausblenden: Nummern bleiben stabil, wenn ein Test mehrere Projekte oder Werkzeuge nacheinander öffnet
+norecent() { printf 'RECENT_MAX=0\n' >> "$CONF/config"; }
 noconf() { rm -f "$CONF/config"; }
 # PATH ohne einzelne Stubs (z. B. kein incus installiert): path_without incus docker
 path_without() {

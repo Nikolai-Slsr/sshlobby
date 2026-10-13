@@ -11,7 +11,8 @@ tools2_open() { # titel eingabe-danach → $OUT, TW und TN wie bei tt_open
   tools2_tw
   menu "$TW\nb\nq\n"; TN=$(tt_nr "$OUT" ") $t"); [ -n "$TN" ] || die "Werkzeug »$t« fehlt:\n$OUT"
   menu "$TW\n$TN\n$rest"; o=$OUT r=$RC e=$ERR
-  tools2_tw; OUT=$o RC=$r ERR=$e                     # Werkzeug steht jetzt unter „Zuletzt“, TW verschiebt sich
+  menu "$TW\nb\nq\n"; TN=$(tt_nr "$OUT" ") $t")         # Werkzeug steht jetzt oben unter „Recent“
+  OUT=$o RC=$r ERR=$e
 }
 
 t_i18n_tools2_hermes_en() {                       # Instanzliste, Instanz-Screen, maskierte config.yaml

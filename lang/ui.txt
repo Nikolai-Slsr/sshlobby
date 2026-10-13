@@ -158,12 +158,12 @@ de = Start
 en = Start
 
 [ui.crumb.main]
-de = Projekt-Dashboard
-en = Project dashboard
+de = sshlobby
+en = sshlobby
 
 [ui.dash.subtitle]
-de = Projekt-Dashboard  v%s · Modus %s
-en = Project dashboard  v%s · mode %s
+de = sshlobby  v%s · Modus %s
+en = sshlobby  v%s · mode %s
 
 [ui.dash.disk_full]
 de = DISK VOLL, aufräumen!

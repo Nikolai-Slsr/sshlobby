@@ -207,7 +207,8 @@ t_updates_reboot_needs_hostname() {               # nur bei Bedarf, Hostname mus
 
 t_updates_session_running_vs_done() {             # laufende Sitzung blockiert, fertige wird nur angeboten
   conf "MODE=docker"
-  tmux new-session -d -s "$SSHLOBBY_APT_SESSION" "sleep 60" || skip "tmux-Sitzung nicht startbar"
+  SHELL=$(type -P sh) tmux new-session -d -s "$SSHLOBBY_APT_SESSION" "sleep 60" || skip "tmux-Sitzung nicht startbar"
+  tmux has-session -t "$SSHLOBBY_APT_SESSION" 2>/dev/null || skip "tmux-Sitzung endet sofort"
   tt_open "Updates" 'b\nb\nq\n'; has "$OUT" ") Laufendes Update öffnen"
   local a; a=$(tt_nr "$OUT" ") Alle Updates installieren")
   tt_open "Updates" "$a\n\nb\nb\nq\n"; has "$OUT" "Es läuft schon ein Update"
@@ -217,19 +218,21 @@ t_updates_session_running_vs_done() {             # laufende Sitzung blockiert, 
   has "$OUT" ") Ergebnis des letzten Updates"; has "$OUT" "fertig, Exit-Code 0"; hasnt "$OUT" "Laufendes Update"
 }
 
-# ─── Werkzeuge unter „Zuletzt“ ─────────────────────────────────────────────
-t_recent_tool_listed() {                           # benutztes Werkzeug steht im Hauptmenü unter Zuletzt
+# ─── Werkzeuge unter „Zuletzt“ (Werkzeug-Menü) ─────────────────────────────
+t_recent_tool_listed() {                           # benutztes Werkzeug steht oben im Werkzeug-Menü, nicht im Hauptmenü
   conf "MODE=docker"
   tt_open "Updates" 'b\nb\nq\n'; rc_is 20
-  menu 'q\n'; has "$OUT" "ZULETZT"; has_re "$OUT" "[0-9]+\) $(printf '\\S') Updates +Werkzeug · "
-  local n; n=$(tt_nr "$OUT" " Updates "); [ -n "$n" ] || die "Updates nicht unter Zuletzt:\n$OUT"
-  menu "$n\nb\nq\n"; rc_is 20; no_err; has "$OUT" "Paketlisten aktualisieren"
+  menu 'q\n'; rc_is 20; hasnt "$OUT" "ZULETZT"; hasnt "$OUT" "Updates"
+  tt_tools; has "$OUT" "▌ ZULETZT"; has "$OUT" "▌ ALLE WERKZEUGE"
+  eq "$(tt_nr "$OUT" ") Updates")" 1 "Updates oben unter Zuletzt"; eq "$(count "$OUT" ") Updates")" 2 "Updates zweimal"
+  has_re "$OUT" " 1\) Updates +gerade eben"
+  menu "$TW\n1\nb\nb\nq\n"; rc_is 20; no_err; has "$OUT" "Paketlisten aktualisieren"
 }
 
 t_recent_tool_hidden_if_unavailable() {            # Werkzeug anderer Modi (incus) erscheint im docker-Modus nicht
   conf "MODE=docker"
   printf '%s|@tool|incus|tool\n' "$(date +%s)" > "$CONF/recents"
-  menu 'q\n'; rc_is 20; no_err; hasnt "$OUT" "ZULETZT"; hasnt "$OUT" "Incus-Übersicht"
+  tt_tools; rc_is 20; no_err; hasnt "$OUT" "ZULETZT"; hasnt "$OUT" "ALLE WERKZEUGE"; hasnt "$OUT" "Incus-Übersicht"
 }
 
 t_recent_setup_not_recorded() {                    # Einstellungen landen nicht im Verlauf

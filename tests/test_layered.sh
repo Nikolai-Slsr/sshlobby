@@ -224,7 +224,7 @@ t_b5_cve_alerts() {
 t_r1_stdin_not_swallowed() {
   # Mehrstufige Eingabe über Health-Scan, CVE-Alerts und Incus-Übersicht: frisst ein incus exec
   # stdin, fehlen die späteren Schritte und das Menü endet per EOF mit 0 statt 20.
-  menu '7\n4\n\n7\n\n1\n\nb\nq\n'; rc_is 20; no_err
+  norecent; menu '7\n4\n\n7\n\n1\n\nb\nq\n'; rc_is 20; no_err
   has "$OUT" "$(row16 security '✓ ok (1 laufend)')"
   has "$OUT" "2 neu"; has "$OUT" "STUB-LIST list -c nsm4"
   eq "$(count "$OUT" "[Enter] weiter")" 3
@@ -234,7 +234,7 @@ t_r1_stdin_container_screen() {                    # Container-Screen + restart/
   for a in restart start; do logged "$a" || die "$a fehlt im Log"; done
 }
 t_b17_pause_without_tty() {
-  menu '7\n1\n\n3\n\n5\nb\nq\n'; rc_is 20; no_err   # ui_pause liest Enter von stdin
+  norecent; menu '7\n1\n\n3\n\n5\nb\nq\n'; rc_is 20; no_err   # ui_pause liest Enter von stdin
   eq "$(count "$OUT" "[Enter] weiter")" 2
   has "$OUT" "STUB-LIST list -c nsm4"; has "$OUT" "STUB-JOURNALCTL"; has "$OUT" "STUB-SSH Docker-Host"
 }

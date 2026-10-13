@@ -57,6 +57,10 @@ en = %s (not created yet)
 de = Version
 en = Version
 
+[settings.info.github]
+de = GitHub
+en = GitHub
+
 [settings.group.general]
 de = Allgemein
 en = General

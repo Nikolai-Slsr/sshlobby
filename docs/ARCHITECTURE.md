@@ -307,15 +307,19 @@ unchanged. `install.sh` copies all `lib/*.sh` and `lang/*.txt`. Texts of a new t
 |---|---|
 | `~/.config/sshlobby/config` | `KEY=value`, never sourced. Keys: `MODE`, `HOST_LABEL` (display name, asked by the setup; the fast-path hint uses it only if it can be an SSH alias), `CVE_CT`, `CVE_DIR`, `SSH_HOSTS`, `AUTOSTART`, `Q_ACTION`, `UI`, `COLOR`, `SYMBOLS`, `RECENT_MAX`, `HERMES_SCAN_CTS`, `LANGUAGE`. Meaning and defaults are documented at `cfg_load`. Unknown keys and broken lines are ignored, quotes and CRLF are tolerated |
 | `~/.config/sshlobby/descriptions` | `name\|text` for CTs, projects, containers (`PD_DESC[name]`) |
-| `~/.config/sshlobby/recents` | `epoch\|group\|target\|action`, at most 200, actions `shell logs compose ctshell` |
+| `~/.config/sshlobby/recents` | `epoch\|group\|target\|action`, at most 200, actions `shell logs compose` (container), `ctshell` (CT), `project` (Compose project, target `-`), `tool` (group `@tool`, target = tool id) |
 | `~/.config/sshlobby/favorites` | `group\|target` |
 | `~/.config/sshlobby/service-favorites` | Favourite systemd units of the "systemd services" tool |
 | `~/.config/sshlobby/backups/<YYYYMMDD-hhmmss>/` | Backups made by the settings menu before a reset or restore, the newest 10 are kept |
 
 `cfg_set KEY value` changes exactly one line (atomically), comments and unknown keys stay.
 `state_add_recent`, `state_recents`, `state_favorites`, `is_fav` and `fav_toggle` compare
-fields exactly and replace files atomically. Target `-` = the CT itself, group `-` = a
-container without a Compose project. The main menu hides entries that do not fit the mode.
+fields exactly and replace files atomically. Target `-` = the CT itself (action `ctshell`) or
+the whole Compose project (action `project`), group `-` = a container without a Compose project.
+Entries of the same second keep their file order (newest last in the file, first in the list).
+The main menu hides entries that do not fit the mode and all tool entries; the tools menu shows
+the tool entries. Opening a recent container that no longer exists removes the entry
+(`state_del_recent`).
 Favourites pointing to targets that no longer exist are marked and can be removed.
 
 Exit codes: `PD_EXIT_OK=0`, `PD_EXIT_ERR=1`, `PD_EXIT_USAGE=2`, `PD_EXIT_SHELL=10` (host shell),

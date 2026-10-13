@@ -176,8 +176,9 @@ desc_load() {
 
 # ─── Verlauf / Favoriten ───────────────────────────────────────────────────
 # recents:   epoch|gruppe|ziel|aktion   favorites: gruppe|ziel
-# gruppe = CT (incus, layered) bzw. Compose-Projekt oder "-" (docker)
-# ziel   = Docker-Container oder "-" (CT selbst)
+# gruppe = CT (incus, layered) bzw. Compose-Projekt oder "-" (docker), "@tool" = Werkzeug
+# ziel   = Docker-Container, Werkzeug-id oder "-" (CT selbst bzw. ganzes Compose-Projekt)
+# aktion = shell logs compose (Container), ctshell (CT), project (Compose-Projekt), tool
 # Exakter Feldvergleich, Dateien werden immer atomar ersetzt.
 state_add_recent() { # gruppe ziel aktion
   local tmp
@@ -187,10 +188,19 @@ state_add_recent() { # gruppe ziel aktion
     printf '%s|%s|%s|%s\n' "$(date +%s)" "$1" "$2" "$3"; } | tail -n 200 > "$tmp" && mv "$tmp" "$RECENTS"
 }
 
-state_recents() { # gültige Einträge, neueste zuerst, je gruppe|ziel nur einmal
+state_del_recent() { # gruppe ziel → Eintrag aus dem Verlauf entfernen
+  local tmp
   [ -f "$RECENTS" ] || return 0
-  awk -F'|' 'NF==4 && $1~/^[1-9][0-9]*$/ && $2!="" && $3!=""' "$RECENTS" | sort -t'|' -k1,1rn \
-    | awk -F'|' '!seen[$2"|"$3]++'
+  tmp=$(mktemp "$RECENTS.XXXXXX") || return 0
+  awk -F'|' -v g="$1" -v c="$2" '!($2==g && $3==c)' "$RECENTS" > "$tmp" && mv "$tmp" "$RECENTS"
+}
+
+# Gültige Einträge, neueste zuerst, je gruppe|ziel nur einmal. Neue Einträge stehen hinten in der
+# Datei: umgedreht + stabile Sortierung hält Einträge aus derselben Sekunde in der richtigen Reihenfolge.
+state_recents() {
+  [ -f "$RECENTS" ] || return 0
+  awk -F'|' 'NF==4 && $1~/^[1-9][0-9]*$/ && $2!="" && $3!="" { l[++n]=$0 } END { while (n) print l[n--] }' \
+    "$RECENTS" | sort -s -t'|' -k1,1rn | awk -F'|' '!seen[$2"|"$3]++'
 }
 
 state_favorites() {

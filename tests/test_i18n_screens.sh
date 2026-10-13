@@ -4,7 +4,7 @@
 
 t_i18n_screens_docker_en() {                       # Hauptmenü, Compose-Projekt, Container auf Englisch
   export SSHLOBBY_LANG=en
-  conf "MODE=docker" "SSH_HOSTS=Docker-Host"
+  conf "MODE=docker" "SSH_HOSTS=Docker-Host" "RECENT_MAX=0"
   menu 'q\n'; rc_is 20; no_err
   has "$OUT" "COMPOSE PROJECTS"; has "$OUT" "Standalone containers"; has "$OUT" "no Compose project"
   has "$OUT" "12/14 containers running"; has "$OUT" " 6) Tools"

@@ -37,7 +37,7 @@ Every screen has the same layout across the full terminal width:
   compact uptime. When space runs out, uptime goes first, then load, then RAM and disk. The
   counters stay.
 - **Breadcrumb**: path of the open menus, the current title in bold. In the main menu it shows
-  the dashboard title. The subtitle is dimmed and right-aligned. If it is too long, it is cut
+  "sshlobby". The subtitle is dimmed and right-aligned. If it is too long, it is cut
   at the front with `…`.
 - **Info lines** (optional): label dimmed, value with cell styles. In the main menu this is where
   the hint for a newer release appears (`New version  [sshlobby 3.1.0]  installed: 3.0.1 · key u

@@ -73,7 +73,7 @@ t_b16_install_fresh() {
 t_install_runs_from_bin() {                        # lib/ wird über readlink -f des Starters gefunden
   mkdir -p "$W/bin"; : > "$W/bashrc"; inst || die "install: $(cat "$W/iout")"
   "$W/bin/sshlobby" --version > "$W/v" 2>&1 || die "Start aus BIN_DST: $(cat "$W/v")"
-  eq "$(cat "$W/v")" "sshlobby 3.0.2"
+  eq "$(cat "$W/v")" "sshlobby 3.0.3"
   printf 'q\n' | env --default-signal=INT setsid -w "$W/bin/sshlobby" > "$W/v" 2>&1; eq $? 20
   has "$(cat "$W/v")" "Modus layered"
 }
