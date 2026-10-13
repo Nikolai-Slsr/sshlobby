@@ -189,7 +189,7 @@ t_broken_state_lines() {
   printf '%s\n' "kaputt" "|x" "alpha|" "" "alpha|app" > "$CONF/favorites"
   menu 'q\n'; rc_is 20; no_err
   eq "$(count "$OUT" "alpha / ")" 1 "nur ein gültiger Verlaufseintrag"
-  eq "$(count "$OUT" "★")" 1 "nur ein gültiger Favorit"
+  eq "$(count "$OUT" ") ★ ")" 1 "nur ein gültiger Favorit"   # Menüzeilen, nicht der Tastenhinweis „f) Favorit ★“
 }
 t_ct_favorite() {                                  # CT selbst als Favorit (ziel "-")
   menu '1\nf\nb\nq\n'; rc_is 20; no_err

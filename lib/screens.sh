@@ -19,6 +19,39 @@ fastpath() {
   printf 'ssh -t %s sshlobby --go %s' "$h" "$1"
 }
 
+# ─── Favoriten per Taste f (wirkt auf die markierte Zeile, UI_KEYROW) ──────
+# Formate in ~/.config/sshlobby/favorites (gruppe|ziel): gruppe|container, ct|- (CT bzw. im docker-Modus
+# ganzes Compose-Projekt), @tool|id (Werkzeug).
+fav_key() { # gruppe ziel name: umschalten und melden; gruppe leer = für diese Zeile gibt es keinen Favoriten
+  local m
+  if [ -z "$1" ]; then ui_note warn "${TX[screens.fav.not_here]}"; return 0; fi
+  if is_fav "$1" "$2"; then fav_toggle "$1" "$2"; tf m screens.fav.removed "$3"
+  else fav_toggle "$1" "$2"; tf m screens.fav.added "$3"; fi
+  ui_note ok "$m"
+}
+fav_need_row() { # → 0 wenn UI_KEYROW gesetzt, sonst Hinweis (Zeilenmodus: „f <Nummer>“)
+  [ -n "$UI_KEYROW" ] && return 0
+  ui_note warn "${TX[screens.fav.which]}"; return 1
+}
+# Hauptmenü: Zeilenwert → Favorit
+main_fav() { # wert
+  local kind a b c
+  IFS=: read -r kind a b c <<< "$1"
+  case "$kind" in
+    ct)          fav_key "$a" "-" "$a";;
+    proj)        if [ "$a" = "-" ]; then fav_key ""; else fav_key "$a" "-" "$a"; fi;;
+    rec)         case "$c" in project|ctshell) fav_key "$a" "-" "$a";; *) fav_key "$a" "$b" "$b";; esac;;
+    fav|favgone) if [ "$a" = "@tool" ]; then fav_key "$a" "$b" "${TOOL_TITLE[$b]:-$b}"
+                 elif [ "$b" = "-" ]; then fav_key "$a" "-" "$a"; else fav_key "$a" "$b" "$b"; fi;;
+    *)           fav_key "";;
+  esac
+}
+fav_tool_item() { # id → Eintrag unter Favoriten (nur wenn im Modus verfügbar), n = bisherige Einträge
+  if [ -z "${TOOL_TITLE[$1]+x}" ] || ! tool_available "$1"; then return 1; fi
+  [ "$n" -eq 0 ] && ui_item header "" "${TX[screens.section.favorites]}" "" fav
+  ui_item item "fav:@tool:$1" "${TOOL_TITLE[$1]}" "${TX[screens.fav.tool]}" fav
+}
+
 # ─── Darstellung: TUI-Zellen (ui_item spalten). Der Zeilenmodus zeigt weiter die Rohtexte ───
 _cell() { FMT=$'\001'"$1"$'\002'"$2"; } # stil text → FMT (wie ui_cell, ohne Subshell)
 fmt_dur() { # "4 weeks" | "About an hour" → FMT "4 W" | "1 h"
@@ -84,6 +117,7 @@ screen_main() {
     sys_stats
     UI_ROOT=1 UI_STYLE=main
     UI_KEYS=("s|${TX[screens.key.host_shell]}" "e|${TX[screens.key.settings]}" "r|${TX[screens.key.reload]}")
+    UI_KEYS+=("f|$(t screens.key.fav_row "$UI_SYM_FAV")")
     upd_banner                 # neueres Release bekannt: Hinweiszeile und Taste u
     if [ "$Q_ACTION" = shell ]; then UI_QUIT_LABEL=${TX[screens.main.quit_shell]}; else UI_QUIT_LABEL=${TX[screens.main.quit_logout]}; fi
     ui_menu "${HOST_LABEL^^}" "$MAIN_SUB"
@@ -94,6 +128,7 @@ screen_main() {
                 s) return "$PD_EXIT_SHELL";;
                 e) screen_settings;;
                 u) upd_tui;;
+                f) fav_need_row && main_fav "$UI_KEYROW";;
               esac;;
       select) main_open "$UI_SEL";;
     esac
@@ -127,6 +162,7 @@ main_items_incus() {
   # Favoriten: CTs, die es nicht mehr gibt, markiert (Auswahl bietet Entfernen an)
   n=0
   while IFS='|' read -r g t; do
+    if [ "$g" = "@tool" ]; then fav_tool_item "$t" && n=$((n+1)); continue; fi
     [ "$MODE" = incus ] && [ "$t" != "-" ] && continue
     [ $n -eq 0 ] && ui_item header "" "${TX[screens.section.favorites]}" "" fav
     if ct_exists "$g"; then ui_item item "fav:$g:$t" "$(target_label "$g" "$t" /)" "${PD_DESC[$g]:-}" fav
@@ -173,10 +209,17 @@ main_items_docker() {
     ui_item item "rec:$g:$t:$a" "$lbl" "$d"
     n=$((n+1))
   done < <(state_recents)
-  # Favoriten anderer Modi (CT-Gruppen) ausblenden, fehlende Container markieren
+  # Favoriten: Werkzeuge, Compose-Projekte (ziel "-"), Container. Favoriten anderer Modi (CT-Gruppen)
+  # und Projekte ohne Container ausblenden, fehlende Container markieren
   n=0
   while IFS='|' read -r g t; do
-    [ "$t" != "-" ] || continue
+    if [ "$g" = "@tool" ]; then fav_tool_item "$t" && n=$((n+1)); continue; fi
+    if [ "$t" = "-" ]; then
+      if [ "$g" = "-" ] || [ -z "${have_p[$g]+x}" ]; then continue; fi
+      [ $n -eq 0 ] && ui_item header "" "${TX[screens.section.favorites]}" "" fav
+      ui_item item "fav:$g:-" "$g" "${PD_DESC[$g]:-${TX[screens.fav.project]}}" fav
+      n=$((n+1)); continue
+    fi
     [ "$g" = "-" ] || [ -n "${have_p[$g]+x}" ] || [ -n "${have_c[$t]+x}" ] || continue
     [ $n -eq 0 ] && ui_item header "" "${TX[screens.section.favorites]}" "" fav
     lbl=$(target_label "$g" "$t" /)
@@ -216,7 +259,10 @@ main_open() { # wert
     proj)    screen_project "$a";;
     tools)   screen_tools;;
     rec)     open_recent "$a" "$b" "$c";;
-    fav)     if [ "$b" = "-" ]; then ct_shell "$a"; else dk_shell "$(mode_ctx "$a")" "$a" "$b"; fi;;
+    fav)     if [ "$a" = "@tool" ]; then PD_RELOAD=0; tool_run "$b"
+             elif [ "$b" = "-" ] && [ "$MODE" = docker ]; then screen_project "$a"
+             elif [ "$b" = "-" ]; then ct_shell "$a"
+             else dk_shell "$(mode_ctx "$a")" "$a" "$b"; fi;;
     favgone) if [ "$MODE" = docker ]; then tf a2 screens.favgone.container "$b"; else tf a2 screens.favgone.ct "$a"; fi
              ui_confirm "$(t screens.favgone.confirm "$a2" "$(target_label "$a" "$b" /)")" && fav_toggle "$a" "$b";;
   esac
@@ -279,7 +325,13 @@ screen_ct() { # ct
     ui_menu "$ct" "$ip · $st"
     case "$UI_ACT" in
       back|quit|eof) return 0;;
-      key) case "$UI_SEL" in r) ct_load;; f) fav_toggle "$ct" "-";; esac;;
+      key) case "$UI_SEL" in
+             r) ct_load;;
+             f) case "$UI_KEYROW" in                        # Container-Zeile: dieser Container, sonst der CT
+                  c:*) fav_key "$ct" "${UI_KEYROW#c:}" "${UI_KEYROW#c:}";;
+                  *)   fav_key "$ct" "-" "$ct";;
+                esac;;
+           esac;;
       select)
         case "$UI_SEL" in
           c:*)       screen_container "$ct" "$ct" "${UI_SEL#c:}";;
@@ -337,10 +389,15 @@ screen_project() { # projekt ("-" = Einzelcontainer) [kontext]
       if [ -n "$dir" ] && [ -n "$ctx" ]; then ui_item item pdir "${TX[screens.action.open_compose_dir]}" "$(t screens.project.dir_desc_ct "$ctx" "$dir")"
       elif [ -n "$dir" ]; then ui_item item pdir "${TX[screens.action.open_compose_dir]}" "$(t screens.project.dir_desc "$dir")"; fi
     fi
-    UI_KEYS=("r|${TX[screens.key.reload]}")
+    UI_KEYS=("r|${TX[screens.key.reload]}" "f|$(t screens.key.fav_row "$UI_SYM_FAV")")
     ui_menu "$title" "$(t screens.project.running "$run" "$total")"
     case "$UI_ACT" in
       back|quit|eof) return 0;;
+      key) [ "$UI_SEL" = f ] || continue
+           case "$UI_KEYROW" in                        # Container-Zeile: Container, sonst das Projekt (nur docker)
+             c:*) fav_key "${ctx:-$p}" "${UI_KEYROW#c:}" "${UI_KEYROW#c:}";;
+             *)   if [ -z "$ctx" ] && [ "$p" != "-" ]; then fav_key "$p" "-" "$p"; else fav_key ""; fi;;
+           esac;;
       select)
         case "$UI_SEL" in
           c:*)      screen_container "$ctx" "${ctx:-$p}" "${UI_SEL#c:}";;
@@ -424,9 +481,15 @@ screen_tools() {
       n=$((n+1))
     done < <(state_recents)
     [ $n -gt 0 ] && ui_item header "" "${TX[screens.tools.section_all]}" "" main
-    for id in $(tool_list); do ui_item item "$id" "${TOOL_TITLE[$id]}" "${TOOL_DESC[$id]}"; done
+    for id in $(tool_list); do
+      if is_fav "@tool" "$id"; then ui_item item "$id" "${TOOL_TITLE[$id]}" "${TOOL_DESC[$id]}" fav
+      else ui_item item "$id" "${TOOL_TITLE[$id]}" "${TOOL_DESC[$id]}"; fi
+    done
+    UI_KEYS=("f|$(t screens.key.fav_row "$UI_SYM_FAV")")
     ui_menu "${TX[screens.tools.title]}" "$(t screens.tools.mode "$MODE")"
     case "$UI_ACT" in
+      key) [ "$UI_SEL" = f ] && fav_need_row && { id=${UI_KEYROW#rec:}
+             if [ "$id" = setup ]; then fav_key ""; else fav_key "@tool" "$id" "${TOOL_TITLE[$id]:-$id}"; fi; };;
       select) PD_RELOAD=0; tool_run "${UI_SEL#rec:}"; [ "$PD_RELOAD" = 1 ] && return 0;;
       *) return 0;;
     esac

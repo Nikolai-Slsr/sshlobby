@@ -147,7 +147,7 @@ The key names in this example are placeholders. Look up the real ones in `lang/*
 | `UI_ROOT=1` | Main menu: `q` = quit, back keys do nothing, footer shows "q Logout" (or "q Shell" with `Q_ACTION=shell`) |
 | `UI_STYLE=main` | Dashboard header instead of the title line (uses `HOST_LABEL`, `VERSION`, `MODE`, `SYS_*`) |
 | `UI_PRESEL=value` | Initial cursor position. Without it: the value selected last under the same title, else the first entry |
-| `ui_menu title [subtitle]` | Shows the menu. Sets `UI_ACT` to `select`, `key`, `back`, `quit` (only with `UI_ROOT=1`) or `eof`, plus `UI_SEL`. Always returns 0. Afterwards `UI_ITEMS UI_INFO UI_KEYS UI_ROOT UI_STYLE UI_PRESEL` are empty |
+| `ui_menu title [subtitle]` | Shows the menu. Sets `UI_ACT` to `select`, `key`, `back`, `quit` (only with `UI_ROOT=1`) or `eof`, plus `UI_SEL`. With `key`, `UI_KEYROW` holds the value of the selected line (TUI: cursor; line mode: input like `f 3`), otherwise it is empty. Always returns 0. Afterwards `UI_ITEMS UI_INFO UI_KEYS UI_ROOT UI_STYLE UI_PRESEL` are empty |
 
 Numbers: selectable entries are numbered from 1, identically in both presentations.
 Values (`value`) must not contain `|`. The screens use `kind:a:b` (names of CTs, projects and
@@ -309,7 +309,7 @@ unchanged. `install.sh` copies all `lib/*.sh` and `lang/*.txt`. Texts of a new t
 | `~/.config/sshlobby/config` | `KEY=value`, never sourced. Keys: `MODE`, `HOST_LABEL` (display name, asked by the setup; the fast-path hint uses it only if it can be an SSH alias), `CVE_CT`, `CVE_DIR`, `SSH_HOSTS`, `AUTOSTART`, `Q_ACTION`, `UI`, `COLOR`, `SYMBOLS`, `RECENT_MAX`, `HERMES_SCAN_CTS`, `LANGUAGE`. Meaning and defaults are documented at `cfg_load`. Unknown keys and broken lines are ignored, quotes and CRLF are tolerated |
 | `~/.config/sshlobby/descriptions` | `name\|text` for CTs, projects, containers (`PD_DESC[name]`) |
 | `~/.config/sshlobby/recents` | `epoch\|group\|target\|action`, at most 200, actions `shell logs compose` (container), `ctshell` (CT), `project` (Compose project, target `-`), `tool` (group `@tool`, target = tool id) |
-| `~/.config/sshlobby/favorites` | `group\|target` |
+| `~/.config/sshlobby/favorites` | `group\|target`: `group\|container`, `ct\|-` (Incus container; in docker mode the whole Compose project), `@tool\|id` (tool) |
 | `~/.config/sshlobby/service-favorites` | Favourite systemd units of the "systemd services" tool |
 | `~/.config/sshlobby/backups/<YYYYMMDD-hhmmss>/` | Backups made by the settings menu before a reset or restore, the newest 10 are kept |
 
@@ -321,7 +321,10 @@ Entries of the same second keep their file order (newest last in the file, first
 The main menu hides entries that do not fit the mode and all tool entries; the tools menu shows
 the tool entries. Opening a recent container that no longer exists removes the entry
 (`state_del_recent`).
-Favourites pointing to targets that no longer exist are marked and can be removed.
+Favourites pointing to targets that no longer exist are marked and can be removed. The key `f`
+toggles the favourite of the selected line: `ui_menu` returns the value of that line in
+`UI_KEYROW` for every hotkey (TUI: cursor, line mode: `f 3`), `fav_key group target name` toggles
+and reports, `main_fav` maps the values of the main menu.
 
 Exit codes: `PD_EXIT_OK=0`, `PD_EXIT_ERR=1`, `PD_EXIT_USAGE=2`, `PD_EXIT_SHELL=10` (host shell),
 `PD_EXIT_LOGOUT=20` (only this one logs out in the `~/.bashrc` hook).

@@ -2,6 +2,22 @@
 
 All notable changes to sshlobby. Versions follow [semantic versioning](https://semver.org/).
 
+## 3.1.1 (2026-10-13)
+
+- Favorites from every list: the key `f` adds or removes the selected line as a favorite, in the main
+  menu, the project screen, the Incus container screen, Docker health and the tools menu. Before, `f`
+  existed only in the container and Incus container screens. Without a terminal: `f 3` for line 3.
+- Compose projects can be favorites (main menu "Favorites", Enter opens the project).
+- Tools can be favorites: they appear in the main menu under "Favorites" and open directly, and carry
+  a ★ in the tools menu.
+- After `f` the cursor stays on the same line.
+- Footer: when space is short, `↑↓ select` is dropped before `/ filter` (as the UI docs describe).
+- Ports & listeners: lines fit into 80 columns again. Column widths come from the data, published
+  Docker ports show "docker" and the container name, the list of public ports and the hints wrap.
+  Before, the container name at the end of a line was cut off.
+- Hermes instances: the entries "Error log" and "Agent log" are now "Show errors.log" and "Show
+  agent.log", so "Error log" is only the tool of that name.
+
 ## 3.1.0 (2026-10-13)
 
 - The tool "Docker health scan" is now **Docker health**, a menu instead of a text page.

@@ -23,7 +23,7 @@ t_i18n_tools2_hermes_en() {                       # Instanzliste, Instanz-Screen
   local i c; i=$(hm_nr "$OUT" "hermes-gateway"); [ -n "$i" ] || die "Instanz fehlt:\n$OUT"
   menu "$TW\n$TN\n$i\nb\nb\nb\nq\n"; rc_is 20; no_err
   has "$OUT" ") Open Hermes CLI"; has "$OUT" ") Restart gateway"; has "$OUT" "asks first"
-  has "$OUT" "LOGS AND FILES"; has "$OUT" "last 150 lines"; has "$OUT" ") Update Hermes"
+  has "$OUT" "LOGS AND FILES"; has "$OUT" "last 150 lines of logs/errors.log"; has "$OUT" ") Show errors.log"; has "$OUT" ") Update Hermes"
   hasnt "$OUT" "Rückfrage"; hasnt "$OUT" "neu starten"; hasnt "$OUT" "Datenordner"; hasnt "$OUT" "Zeilen"
   c=$(tt_nr "$OUT" ") Show config.yaml"); [ -n "$c" ] || die "kein config.yaml-Eintrag:\n$OUT"
   menu "$TW\n$TN\n$i\n$c\n\nb\nb\nb\nq\n"; rc_is 20; no_err

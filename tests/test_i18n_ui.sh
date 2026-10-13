@@ -21,7 +21,7 @@ t_i18n_ui_menu_en() {                              # Zeilenmodus: Kopf, Prompt, 
   conf "MODE=incus" "CVE_CT=security"
   printf '%s\n' "$(($(date +%s) - 10))|alpha|-|ctshell" > "$CONF/recents"
   menu '2\n3\ny\n4\nn\n6\n\nb\nq\n'; rc_is 20; no_err
-  has "$OUT" "sshlobby  v3.1.0 · mode incus"; has "$OUT" "just now"
+  has "$OUT" "sshlobby  v3.1.1 · mode incus"; has "$OUT" "just now"
   has "$OUT" "  Choice: "; has "$OUT" "b) back"; has "$OUT" "[y/N]"; has "$OUT" "[Enter] continue"
   has "$OUT" "CT alpha: stopping"; has "$OUT" "STUB-CT-stop alpha"; hasnt "$OUT" "STUB-CT-restart"
   has "$OUT" "── Log of alpha ──"

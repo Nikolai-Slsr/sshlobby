@@ -110,9 +110,9 @@ cp "$ROOT/examples/descriptions.docker-host" "$E/home/.config/sshlobby/descripti
 now=$(date +%s)
 printf '%s\n' "$((now - 7200))|-|hermes|logs" "$((now - 3600))|@tool|updates|tool" "$((now - 900))|@tool|check|tool" \
   "$((now - 300))|nextcloud|Nextcloud|shell" "$((now - 120))|nextcloud|-|project" > "$E/recents.fixed"
-printf 'nextcloud|Nextcloud\n' > "$E/home/.config/sshlobby/favorites"
-# main menu: 1 nextcloud (project), 2 nextcloud / Nextcloud, 3 hermes, 4 ★ favorite, projects, tools last (End)
-shot main-docker.png "root@web-01: ~" 104 23 "$W_MAIN"
+printf 'nextcloud|Nextcloud\n@tool|health\n' > "$E/home/.config/sshlobby/favorites"
+# main menu: 1 nextcloud (project), 2 nextcloud / Nextcloud, 3 hermes, 4-5 ★ favorites, projects, tools last (End)
+shot main-docker.png "root@web-01: ~" 104 25 "$W_MAIN"
 shot project.png "root@web-01: ~" 104 24 "$W_CONT" 1 Enter Down
 shot confirm.png "root@web-01: ~" 104 22 "$W_CONFIRM" 1 Enter Down Enter Down Down Down Enter
 shot tools.png "root@web-01: ~" 104 26 "$W_TOOLS" End Enter
